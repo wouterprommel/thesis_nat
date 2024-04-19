@@ -92,7 +92,7 @@ pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 E_nu = 5e6
 n_samples = 100000000
 n_samples = int(1e7)
-for i in range(4):
+for i in range(1):
     mc_cs = mc_cross_section(E_nu, pdf, n_samples)
     #mc_cs.plot_mc_samples()
     #print(len(str(E_nu)) - 3)
