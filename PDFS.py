@@ -2,6 +2,8 @@ import lhapdf
 import numpy as np
 import matplotlib.pyplot as plt
 
+import concurrent.futures as cf
+
 
 pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 print(pdf.xMin, pdf.xMax)
@@ -64,15 +66,43 @@ class mc_cross_section():
         integral = 0.0
         n_samples = len(self.x_region)
         print('#samples:', n_samples)
+        '''
         for i in range(n_samples):
             if i % 1000000 == 0:
                  print(i)
             integral += self._differential_cs_neutrino_nuclei(self.x_region[i], self.Q2_region[i])
-        
+        '''
+        workers = 8
+        fs = int(n_samples/workers)
+        fn = fs
+        sub_range = [(0, fs)]
+        for i in range(workers):
+            fnn = fn + fs
+            if fnn > n_samples:
+                fnn = n_samples
+            sub_range.append((fn, fnn))
+            fn = fnn
+        print(sub_range)
+
+        cnt = 0
+        with cf.ThreadPoolExecutor(max_workers=workers) as executor:
+            future_split = {executor.submit(self.split, self._differential_cs_neutrino_nuclei, self.x_region, self.Q2_region, sub_range[i]): i for i in range(workers)}
+            for future in cf.as_completed(future_split):
+                integral += future.result()
+                cnt += 1
+                if cnt % 1000  == 0:
+                    print(cnt)
+
         # int =  func-average * area
         integral *= self.area / n_samples 
         
         return integral
+
+    def split(self, func, a, b, sub_range):
+        int = 0.0
+        for i in range(*sub_range):
+            int += func(a[i], b[i])
+        return int
 
     def _differential_cs_neutrino_nuclei(self, x, Q2):
         assert Q2 < self.pdf.q2Max, f'Q2 out of range {Q2 - self.pdf.q2Max}'
@@ -87,12 +117,14 @@ assert True, 'test is true'
 a = np.array([1,2,3,4])
 a = a * 2
 print(a < np.array([4,5,5,5]))
+for i in range(*(2,4)):
+    print(i)
 
 pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 E_nu = 5e6
 n_samples = 100000000
 n_samples = int(1e7)
-for i in range(4):
+for i in range(1):
     mc_cs = mc_cross_section(E_nu, pdf, n_samples)
     #mc_cs.plot_mc_samples()
     #print(len(str(E_nu)) - 3)
