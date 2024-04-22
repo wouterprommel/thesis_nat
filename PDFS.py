@@ -22,7 +22,7 @@ if False:
 
 class mc_cross_section():
 
-    def __init__(self, E_nu, pdf, num_samples):
+    def __init__(self, E_nu, pdf, num_samples, xmin=0, xmax=1):
         Mn = 0.938
         self.pdf = pdf
 
@@ -34,8 +34,11 @@ class mc_cross_section():
 
         #self.num_samples=100000000
         self.num_samples=num_samples
-        x_set_min = pdf.xMin
-        x_set_max = 1
+        if xmin < pdf.xMin:
+            x_set_min = pdf.xMin
+        else:
+            x_set_min = xmin
+        x_set_max = xmax
         q2_set_min = pdf.q2Min
         q2_set_max = 1e3 #self.s
 
@@ -125,19 +128,25 @@ class mc_cross_section():
         return a*(b + c*d)
 
 
-assert True, 'test is true'
-a = np.array([1,2,3,4])
-a = a * 2
-print(a < np.array([4,5,5,5]))
-
 pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 E_nu = 1e6
 n_samples = 100000000
-n_samples = int(1e4)
-for i in range(4):
-    mc_cs = mc_cross_section(E_nu, pdf, n_samples)
+for i in range(1):
+    n_samples = int(1e5)
+    mc_cs1 = mc_cross_section(E_nu, pdf, n_samples, xmax=0.1)
     #mc_cs.plot_mc_samples()
     #print(len(str(E_nu)) - 3)
-    #qcs = mc_cs.calc()
-    cs = mc_cs.calc_vis()
-    print("Cross-Section Neutrino-Proton:", round(cs/(2.56819e-9), 3), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
+    #cs1 = mc_cs1.calc()
+    cs1 = mc_cs1.calc_vis()
+    print("xmax=0.1, Cross-Section Neutrino-Proton:", round(cs1/(2.56819e-9), 3), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
+
+    n_samples = int(1e3)
+    mc_cs2 = mc_cross_section(E_nu, pdf, n_samples, xmin=0.1, xmax=1)
+    #mc_cs.plot_mc_samples()
+    #print(len(str(E_nu)) - 3)
+    cs2 = mc_cs2.calc()
+    #cs2 = mc_cs2.calc_vis()
+    print("x0.1-1, Cross-Section Neutrino-Proton:", round(cs2/(2.56819e-9), 3), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
+
+    print("tot - x, Cross-Section Neutrino-Proton:", round((cs1+cs2)/(2.56819e-9), 3), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
+
