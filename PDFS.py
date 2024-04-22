@@ -22,46 +22,50 @@ if False:
 
 class mc_cross_section():
 
-    def __init__(self, E_nu, pdf, num_samples, xmin=0, xmax=1):
+    def __init__(self, E_nu, pdf, regions, n_samples_list):
         Mn = 0.938
         self.pdf = pdf
 
         self.GF = 1.663787e-5
         self.Mw = 80.385
         self.s = 2*E_nu*Mn
+
+        self.cs = 0.0
         #print(f's: {self.s}, Q2_max: {self.pdf.q2Max}, diff s q2max: {self.pdf.q2Max - self.s}')
         print(f'pdf ranges: x min: {pdf.xMin}, x max:{pdf.xMax}, Q2 min:{pdf.q2Min}, Q2 max{pdf.q2Max}')
         assert self.s < self.pdf.q2Max, 'E_nu too high, s > q2max'
 
-        #self.num_samples=100000000
-        self.num_samples=num_samples
-        if xmin < pdf.xMin:
-            x_set_min = pdf.xMin
-        else:
-            x_set_min = xmin
-        x_set_max = xmax
-        q2_set_min = pdf.q2Min
-        q2_set_max = 1e3 #self.s
-        print(f'set ranges: x min: {x_set_min}, x max:{x_set_max}, Q2 min:{q2_set_min}, Q2 max{q2_set_max}')
+        for idx, region in enumerate(regions):
 
-        self.x_samples = np.random.uniform(x_set_min, x_set_max, self.num_samples)
-        self.Q2_samples = np.random.uniform(q2_set_min, q2_set_max, self.num_samples)
-        #self.area = ((1 - pdf.xMin) * (self.s - pdf.q2Min))
+            num_samples = n_samples_list[idx]
+            if xmin < pdf.xMin:
+                x_set_min = pdf.xMin
+            else:
+                x_set_min = xmin
+            x_set_max = xmax
+            q2_set_min = pdf.q2Min
+            q2_set_max = 1e3 #self.s
+            print(f'set ranges: x min: {x_set_min}, x max:{x_set_max}, Q2 min:{q2_set_min}, Q2 max{q2_set_max}')
 
-        bool_array = self.x_samples * self.s > self.Q2_samples
+            self.x_samples = np.random.uniform(x_set_min, x_set_max, num_samples)
+            self.Q2_samples = np.random.uniform(q2_set_min, q2_set_max, num_samples)
 
-        self.x_region = self.x_samples[bool_array]
-        self.Q2_region = self.Q2_samples[bool_array]
-        self.area = sum(bool_array)/self.num_samples * ((x_set_max - x_set_min) * (q2_set_max - q2_set_min))
-        print('sum bool array', sum(bool_array))
-        print('INT fraction', sum(bool_array)/self.num_samples)
+            bool_array = self.x_samples * self.s > self.Q2_samples
+
+            self.x_region = self.x_samples[bool_array]
+            self.Q2_region = self.Q2_samples[bool_array]
+            self.area = sum(bool_array)/num_samples * ((x_set_max - x_set_min) * (q2_set_max - q2_set_min))
+            print('sum bool array', sum(bool_array))
+            print('INT fraction', sum(bool_array)/num_samples)
+
+            self.cs += self.calc(self.x_region, self.Q2_region, self.area)
 
     def plot_mc_samples(self):
-            print('Integration area', self.area)
-            plt.title('MC samples')
-            plt.scatter(self.x_samples, self.Q2_samples)
-            plt.scatter(self.x_region, self.Q2_region)
-            plt.show()
+        print('Integration area', self.area)
+        plt.title('MC samples')
+        plt.scatter(self.x_samples, self.Q2_samples)
+        plt.scatter(self.x_region, self.Q2_region)
+        plt.show()
 
     def plot_mc_samples_eval(self, eval_list):
         plt.title('evaluated MC samples')
@@ -71,8 +75,8 @@ class mc_cross_section():
         plt.show()
 
 
-    def calc(self):
-        integral = self._mc()
+    def calc(self, X, Q2, N):
+        integral = self._mc(X, Q2, A)
         return (self.GF*self.GF * self.Mw**4)/(4*np.pi) * integral # factor 2 from (N + P)/2 extra 2 factor from anti-neutrino
 
     def calc_vis(self):
@@ -92,17 +96,17 @@ class mc_cross_section():
         return cs
 
 
-    def _mc(self):
+    def _mc(self, X, Q2, A):
         integral = 0.0
-        n_samples = len(self.x_region)
+        n_samples = len(X)
         print('#samples:', n_samples)
         for i in range(n_samples):
             if i % 1000000 == 0:
                  print(i)
-            integral += self._differential_cs_neutrino_nuclei(self.x_region[i], self.Q2_region[i])
+            integral += self._differential_cs_neutrino_nuclei(X[i], Q2[i])
         
         # int =  func-average * area
-        integral *= self.area / n_samples 
+        integral *= A / n_samples 
         
         return integral
 
@@ -134,7 +138,6 @@ class mc_cross_section():
 
 pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 E_nu = 1e6
-n_samples = 100000000
 for i in range(4):
     x_plit = 1e-4
     n_samples = int(1e7)
