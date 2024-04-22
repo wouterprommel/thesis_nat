@@ -29,7 +29,8 @@ class mc_cross_section():
         self.GF = 1.663787e-5
         self.Mw = 80.385
         self.s = 2*E_nu*Mn
-        print(f's: {self.s}, Q2_max: {self.pdf.q2Max}, diff s q2max: {self.pdf.q2Max - self.s}')
+        #print(f's: {self.s}, Q2_max: {self.pdf.q2Max}, diff s q2max: {self.pdf.q2Max - self.s}')
+        print(f'pdf ranges: x min: {pdf.xMin}, x max:{pdf.xMax}, Q2 min:{pdf.q2Min}, Q2 max{pdf.q2Max}')
         assert self.s < self.pdf.q2Max, 'E_nu too high, s > q2max'
 
         #self.num_samples=100000000
@@ -41,6 +42,7 @@ class mc_cross_section():
         x_set_max = xmax
         q2_set_min = pdf.q2Min
         q2_set_max = 1e3 #self.s
+        print(f'set ranges: x min: {x_set_min}, x max:{x_set_max}, Q2 min:{q2_set_min}, Q2 max{q2_set_max}')
 
         self.x_samples = np.random.uniform(x_set_min, x_set_max, self.num_samples)
         self.Q2_samples = np.random.uniform(q2_set_min, q2_set_max, self.num_samples)
@@ -71,12 +73,12 @@ class mc_cross_section():
 
     def calc(self):
         integral = self._mc()
-        return (self.GF*self.GF * self.Mw**4)/(2*np.pi) * integral # factor 2 from (N + P)/2
+        return (self.GF*self.GF * self.Mw**4)/(4*np.pi) * integral # factor 2 from (N + P)/2 extra 2 factor from anti-neutrino
 
     def calc_vis(self):
         integral, int_list = self._mc_list()
-        cs = (self.GF*self.GF * self.Mw**4)/(2*np.pi) * integral # factor 2 from (N + P)/2
-        eval_list = (self.GF*self.GF * self.Mw**4)/(2*np.pi) * np.array(int_list)
+        cs = (self.GF*self.GF * self.Mw**4)/(4*np.pi) * integral # factor 2 from (N + P)/2
+        eval_list = (self.GF*self.GF * self.Mw**4)/(4*np.pi) * np.array(int_list)
         print("All points: Cross-Section Neutrino-Proton:", cs/(2.56819e-9), 'pb')
         cs_top10 = 0.0
         for i in range(10):
@@ -123,25 +125,28 @@ class mc_cross_section():
         assert Q2 < self.pdf.q2Max, f'Q2 out of range {Q2 - self.pdf.q2Max}'
         a = 1/(self.Mw*self.Mw + Q2*Q2)**2
         b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2))/(x)
+        anti_b = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-3, x, Q2))/(x)
         c = (1 - Q2/(x*self.s))**2
         d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))/(x)
-        return a*(b + c*d)
+        anti_d = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(4, x, Q2))/(x)
+        return a*((b + anti_b) + c*(d + anti_d))
 
 
 pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 E_nu = 1e6
 n_samples = 100000000
-for i in range(1):
-    n_samples = int(1e5)
-    mc_cs1 = mc_cross_section(E_nu, pdf, n_samples, xmax=0.1)
+for i in range(4):
+    x_plit = 1e-4
+    n_samples = int(1e7)
+    mc_cs1 = mc_cross_section(E_nu, pdf, n_samples, xmax=x_plit )
     #mc_cs.plot_mc_samples()
     #print(len(str(E_nu)) - 3)
-    #cs1 = mc_cs1.calc()
-    cs1 = mc_cs1.calc_vis()
+    cs1 = mc_cs1.calc()
+    #cs1 = mc_cs1.calc_vis()
     print("xmax=0.1, Cross-Section Neutrino-Proton:", round(cs1/(2.56819e-9), 3), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
 
-    n_samples = int(1e3)
-    mc_cs2 = mc_cross_section(E_nu, pdf, n_samples, xmin=0.1, xmax=1)
+    n_samples = int(1e6)
+    mc_cs2 = mc_cross_section(E_nu, pdf, n_samples, xmin=x_plit, xmax=1)
     #mc_cs.plot_mc_samples()
     #print(len(str(E_nu)) - 3)
     cs2 = mc_cs2.calc()
