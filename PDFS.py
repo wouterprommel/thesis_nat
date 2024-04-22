@@ -35,7 +35,7 @@ class mc_cross_section():
 
         self.cs = 0.0
         #print(f's: {self.s}, Q2_max: {self.pdf.q2Max}, diff s q2max: {self.pdf.q2Max - self.s}')
-        print(f'pdf ranges: x min: {pdf.xMin}, x max:{pdf.xMax}, Q2 min:{pdf.q2Min}, Q2 max{pdf.q2Max}')
+        #print(f'pdf ranges: x min: {pdf.xMin}, x max:{pdf.xMax}, Q2 min:{pdf.q2Min}, Q2 max{pdf.q2Max}')
         assert self.s < self.pdf.q2Max, 'E_nu too high, s > q2max'
         assert len(regions) - 1 == len(n_samples_list), 'regions must be 1 longer than n_samples'
         n_samples_list = [0] + n_samples_list
@@ -55,9 +55,9 @@ class mc_cross_section():
             x_set_max = xmax
 
             q2_set_min = pdf.q2Min
-            q2_set_max = 1e4 #self.s
+            q2_set_max = self.s
 
-            print(f'set ranges: x min: {x_set_min}, x max:{x_set_max}, Q2 min:{q2_set_min}, Q2 max{q2_set_max}')
+            #print(f'set ranges: x min: {x_set_min}, x max:{x_set_max}, Q2 min:{q2_set_min}, Q2 max{q2_set_max}')
 
             # initial sample points
             x_samples = np.random.uniform(x_set_min, x_set_max, num_samples)
@@ -68,11 +68,17 @@ class mc_cross_section():
             bool_array = x_samples * self.s > Q2_samples
 
             # usable region
-            self.x_region = x_samples[bool_array]
-            self.Q2_region = Q2_samples[bool_array]
-            
+            x_region = x_samples[bool_array]
+            Q2_region = Q2_samples[bool_array]
+            f = len(x_region)/num_samples
             # number of new samples needed based on fraction of usable points
-            n_new_samples = round((num_samples - sum(bool_array))/(sum(bool_array)/num_samples))
+            if f == 0:
+                n_new_samples = num_samples
+            else:
+                n_new_samples = round((num_samples - sum(bool_array))/(sum(bool_array)/num_samples))
+
+            if n_new_samples >= num_samples*5:
+                n_new_samples = num_samples*5
 
             # new samples
             x_samples = np.random.uniform(x_set_min, x_set_max, n_new_samples)
@@ -82,21 +88,18 @@ class mc_cross_section():
             bool_array = x_samples * self.s > Q2_samples
 
             # add usable samples to the region
-            self.x_region = np.concatenate((self.x_region, x_samples[bool_array]), axis=0)
-            self.Q2_region = np.concatenate((self.Q2_region, Q2_samples[bool_array]), axis=0)
+            x_region = np.concatenate((x_region, x_samples[bool_array]), axis=0)
+            Q2_region = np.concatenate((Q2_region, Q2_samples[bool_array]), axis=0)
 
             # total used samples
             num_samples += n_new_samples
 
-            print('Used points:', len(self.x_region))
-            print('INT fraction after addition', len(self.x_region)/num_samples)
+            area = len(x_region)/num_samples * ((x_set_max - x_set_min) * (q2_set_max - q2_set_min))
 
-            area = len(self.x_region)/num_samples * ((x_set_max - x_set_min) * (q2_set_max - q2_set_min))
-
-            cs_region = self.calc(self.x_region, self.Q2_region, area)
+            cs_region = self.calc(x_region, Q2_region, area)
             self.cs += cs_region
             print(f'cs: {GeV_to_pb(cs_region)}, for x region: {xmin} - {xmax}')
-            print(f'cs: {GeV_to_pb(self.cs)}, from 0 to {xmax}')
+        print(f'cs: {GeV_to_pb(self.cs)}, from 0 to {xmax}')
 
     def plot_mc_samples(self):
         print('Integration area', self.area)
@@ -115,7 +118,7 @@ class mc_cross_section():
 
     def calc(self, X, Q2, A):
         integral = self._mc(X, Q2, A)
-        return (self.GF*self.GF * self.Mw**4)/(4*np.pi) * integral # factor 2 from (N + P)/2 extra 2 factor from anti-neutrino
+        return (self.GF*self.GF * self.Mw**4)/(4*np.pi) * integral # factor 2 from (N + P)/2 extra 2 factor from anti-neutrino But just 4 for the structure functions ... weird
 
     def calc_vis(self):
         integral, int_list = self._mc_list()
@@ -136,17 +139,20 @@ class mc_cross_section():
 
     def _mc(self, X, Q2, A):
         integral = 0.0
+        integral2 = 0.0
         n_samples = len(X)
-        print('#samples:', n_samples)
         for i in range(n_samples):
             if i % 1000000 == 0:
                  print(i)
-            integral += self._differential_cs_neutrino_nuclei(X[i], Q2[i])
+            integral += self._diff_cs_neutrino_nuclei_struc_func(X[i], Q2[i])
+            integral2 += self._diff_cs_nn(X[i], Q2[i])
         
         # int =  func-average * area
         integral *= A / n_samples 
+        integral2 *= A / n_samples 
+        print(f'Difference between the two integrals:', integral, integral2, integral-integral2, integral/integral2)
         
-        return integral
+        return integral2
 
     def _mc_list(self):
         n_samples = len(self.x_region)
@@ -163,22 +169,43 @@ class mc_cross_section():
         
         return integral, int_list
 
-    def _differential_cs_neutrino_nuclei(self, x, Q2):
+    def _diff_cs_neutrino_nuclei(self, x, Q2):
         assert Q2 < self.pdf.q2Max, f'Q2 out of range {Q2 - self.pdf.q2Max}'
-        a = 1/(self.Mw*self.Mw + Q2*Q2)**2
+        a = 1/(self.Mw*self.Mw + Q2)**2
         b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2))/(x)
         anti_b = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-3, x, Q2))/(x)
         c = (1 - Q2/(x*self.s))**2
+        assert c > 0
         d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))/(x)
         anti_d = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(4, x, Q2))/(x)
         return a*((b + anti_b) + c*(d + anti_d))
 
+    def _diff_cs_neutrino_nuclei_struc_func(self, x, Q2):
+        a = 1/(self.Mw*self.Mw + Q2)**2
+        Yp = 1 + (1 - Q2/(x*self.s))**2
+        Ym = 1 - (1 - Q2/(x*self.s))**2
+        F2 = 2*(self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))
+        xF3 = 2*((self.pdf.xfxQ2(2, x, Q2) - self.pdf.xfxQ2(-2, x, Q2)) + (self.pdf.xfxQ2(1, x, Q2) - self.pdf.xfxQ2(-1, x, Q2)) + 2*self.pdf.xfxQ2(3, x, Q2) - 2*self.pdf.xfxQ2(-4, x, Q2))
+        return a*(Yp*F2 + Ym*xF3)/x
+
+    def _diff_cs_nn(self, x, Q2):
+        a = 1/(self.Mw*self.Mw + Q2)**2
+        b = (2*self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(1, x, Q2) - self.pdf.xfxQ2(-2, x, Q2) - self.pdf.xfxQ2(-1, x, Q2) + 4*self.pdf.xfxQ2(3, x, Q2))/x
+        c = (1 - Q2/(x*self.s))**2
+        d = (self.pdf.xfxQ2(-2, x, Q2) - self.pdf.xfxQ2(-1, x, Q2) + 4*self.pdf.xfxQ2(-4, x, Q2))/x
+        return a*(b + c*d)
+
+
 
 pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
-E_nu = 1e6
-n_samples = 100000000
-regions = [0, 1e-4, 1e-3, 1e-2, 1]
-n_samples_list = [1e3, 1e3, 1e3, 1e3]
+if True:
+    E_nu = 1e6
+    regions = [0, 1e-3, 1e-2, 1e-1, 0.2, 1]
+    n_samples_list = [1e6, 1e6, 1e6, 1e5, 1e5]
+if False:
+    E_nu = 1e4
+    regions = [0, 1e-3, 1e-2, 1e-1, 0.2, 1]
+    n_samples_list = [ 1e5, 1e5, 1e5, 1e4, 1e4]
 for i in range(1):
     mc_cs = mc_cross_section(E_nu, pdf, regions, n_samples_list)
 
