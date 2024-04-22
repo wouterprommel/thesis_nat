@@ -167,12 +167,6 @@ class mc_cross_section():
         anti_d = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(4, x, Q2))/(x)
         return a*((b) + c*(d))
 
-
-pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
-E_nu = 5e3
-n_samples = 100000000
-        return 4*a*((b) + c*(d)) # should be times 2 i think.. because where not using anti-neutrino
-
     def _diff_cs_neutrino_nuclei_struc_func(self, x, Q2):
         a = 1/(self.Mw*self.Mw + Q2)**2
         Yp = 1 + (1 - Q2/(x*self.s))**2
