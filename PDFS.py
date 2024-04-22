@@ -44,22 +44,36 @@ class mc_cross_section():
         q2_set_max = 1e3 #self.s
         print(f'set ranges: x min: {x_set_min}, x max:{x_set_max}, Q2 min:{q2_set_min}, Q2 max{q2_set_max}')
 
-        self.x_samples = np.random.uniform(x_set_min, x_set_max, self.num_samples)
-        self.Q2_samples = np.random.uniform(q2_set_min, q2_set_max, self.num_samples)
+        x_samples = np.random.uniform(x_set_min, x_set_max, self.num_samples)
+        Q2_samples = np.random.uniform(q2_set_min, q2_set_max, self.num_samples)
         #self.area = ((1 - pdf.xMin) * (self.s - pdf.q2Min))
 
-        bool_array = self.x_samples * self.s > self.Q2_samples
+        bool_array = x_samples * self.s > Q2_samples
 
-        self.x_region = self.x_samples[bool_array]
-        self.Q2_region = self.Q2_samples[bool_array]
-        self.area = sum(bool_array)/self.num_samples * ((x_set_max - x_set_min) * (q2_set_max - q2_set_min))
-        print('sum bool array', sum(bool_array))
-        print('INT fraction', sum(bool_array)/self.num_samples)
+        self.x_region = x_samples[bool_array]
+        self.Q2_region = Q2_samples[bool_array]
+        
+        n_new_samples = round((self.num_samples - sum(bool_array))/(sum(bool_array)/self.num_samples))
+
+        x_samples = np.random.uniform(x_set_min, x_set_max, n_new_samples)
+        Q2_samples = np.random.uniform(q2_set_min, q2_set_max, n_new_samples)
+
+        bool_array = x_samples * self.s > Q2_samples
+
+        self.x_region = np.concatenate((self.x_region, x_samples[bool_array]), axis=0)
+        self.Q2_region = np.concatenate((self.Q2_region, Q2_samples[bool_array]), axis=0)
+
+        self.num_samples += n_new_samples
+
+        print('Used points:', len(self.x_region))
+        print('INT fraction after addition', len(self.x_region)/self.num_samples)
+
+        self.area = len(self.x_region)/self.num_samples * ((x_set_max - x_set_min) * (q2_set_max - q2_set_min))
 
     def plot_mc_samples(self):
             print('Integration area', self.area)
             plt.title('MC samples')
-            plt.scatter(self.x_samples, self.Q2_samples)
+            #plt.scatter(self.x_samples, self.Q2_samples)
             plt.scatter(self.x_region, self.Q2_region)
             plt.show()
 
@@ -135,9 +149,9 @@ class mc_cross_section():
 pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 E_nu = 1e6
 n_samples = 100000000
-for i in range(4):
-    x_plit = 1e-4
-    n_samples = int(1e7)
+for i in range(1):
+    x_plit = 1e-5
+    n_samples = int(1e6)
     mc_cs1 = mc_cross_section(E_nu, pdf, n_samples, xmax=x_plit )
     #mc_cs.plot_mc_samples()
     #print(len(str(E_nu)) - 3)
