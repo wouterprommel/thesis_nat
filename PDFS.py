@@ -2,23 +2,6 @@ import lhapdf
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
-print(pdf.xMin, pdf.xMax)
-print(pdf.q2Min, pdf.q2Max)
-xrange = np.linspace(1.0000e-4, 1, 10)
-print(min(xrange), max(xrange))
-
-#f_u = [pdf.xfxQ2(2, i, 10) for i in xrange]
-#f_d = [pdf.xfxQ2(1, i, 10) for i in xrange]
-#print(f_u)
-#print(f_d)
-if False:
-    plt.plot(xrange, f_d)
-    plt.plot(xrange, f_u)
-    plt.xscale('log')
-    plt.show()
-
 def GeV_to_pb(cs):
     return round((cs)/(2.56819e-9), 3)
 
@@ -35,7 +18,7 @@ class mc_cross_section():
 
         self.cs = 0.0
         #print(f's: {self.s}, Q2_max: {self.pdf.q2Max}, diff s q2max: {self.pdf.q2Max - self.s}')
-        #print(f'pdf ranges: x min: {pdf.xMin}, x max:{pdf.xMax}, Q2 min:{pdf.q2Min}, Q2 max{pdf.q2Max}')
+        print(f'pdf ranges: x min: {pdf.xMin}, x max:{pdf.xMax}, Q2 min:{pdf.q2Min}, Q2 max{pdf.q2Max}')
         assert self.s < self.pdf.q2Max, 'E_nu too high, s > q2max'
         assert len(regions) - 1 == len(n_samples_list), 'regions must be 1 longer than n_samples'
         n_samples_list = [0] + n_samples_list
@@ -118,7 +101,7 @@ class mc_cross_section():
 
     def calc(self, X, Q2, A):
         integral = self._mc(X, Q2, A)
-        return (self.GF*self.GF * self.Mw**4)/(4*np.pi) * integral # factor 2 from (N + P)/2 extra 2 factor from anti-neutrino But just 4 for the structure functions ... weird
+        return (self.GF*self.GF * self.Mw**4)/(4*np.pi) * integral # factor 2 from (N + P)/2 extra 2 factor from anti-neutrino But just 4 for the structure functions bc those are multiplied by 2...
 
     def calc_vis(self):
         integral, int_list = self._mc_list()
@@ -140,17 +123,21 @@ class mc_cross_section():
     def _mc(self, X, Q2, A):
         integral = 0.0
         integral2 = 0.0
+        integral3 = 0.0
         n_samples = len(X)
         for i in range(n_samples):
             if i % 1000000 == 0:
                  print(i)
             integral += self._diff_cs_neutrino_nuclei_struc_func(X[i], Q2[i])
             integral2 += self._diff_cs_nn(X[i], Q2[i])
+            integral3 += self._diff_cs_neutrino_nuclei(X[i], Q2[i])
+
         
         # int =  func-average * area
         integral *= A / n_samples 
         integral2 *= A / n_samples 
-        print(f'Difference between the two integrals:', integral, integral2, integral-integral2, integral/integral2)
+        integral3 *= A / n_samples 
+        print(f'Difference between the two integrals:', integral, integral2, integral3, integral/integral2, integral/integral3)
         
         return integral2
 
@@ -178,30 +165,31 @@ class mc_cross_section():
         assert c > 0
         d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))/(x)
         anti_d = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(4, x, Q2))/(x)
-        return a*((b + anti_b) + c*(d + anti_d))
+        return 4*a*((b) + c*(d)) # should be times 2 i think.. because where not using anti-neutrino
 
     def _diff_cs_neutrino_nuclei_struc_func(self, x, Q2):
         a = 1/(self.Mw*self.Mw + Q2)**2
         Yp = 1 + (1 - Q2/(x*self.s))**2
         Ym = 1 - (1 - Q2/(x*self.s))**2
-        F2 = 2*(self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))
+        F2 = 2*(self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))
         xF3 = 2*((self.pdf.xfxQ2(2, x, Q2) - self.pdf.xfxQ2(-2, x, Q2)) + (self.pdf.xfxQ2(1, x, Q2) - self.pdf.xfxQ2(-1, x, Q2)) + 2*self.pdf.xfxQ2(3, x, Q2) - 2*self.pdf.xfxQ2(-4, x, Q2))
         return a*(Yp*F2 + Ym*xF3)/x
 
     def _diff_cs_nn(self, x, Q2):
-        a = 1/(self.Mw*self.Mw + Q2)**2
-        b = (2*self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(1, x, Q2) - self.pdf.xfxQ2(-2, x, Q2) - self.pdf.xfxQ2(-1, x, Q2) + 4*self.pdf.xfxQ2(3, x, Q2))/x
+        a = 2/(self.Mw*self.Mw + Q2)**2
+        b = (2*self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(1, x, Q2) + 4*self.pdf.xfxQ2(3, x, Q2))/x
         c = (1 - Q2/(x*self.s))**2
-        d = (self.pdf.xfxQ2(-2, x, Q2) - self.pdf.xfxQ2(-1, x, Q2) + 4*self.pdf.xfxQ2(-4, x, Q2))/x
+        d = (2*self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-1, x, Q2) + 4*self.pdf.xfxQ2(-4, x, Q2))/x
         return a*(b + c*d)
 
 
 
-pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
+#pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
+pdf = lhapdf.mkPDF("NNPDF40_lo_as_01180")
 if True:
     E_nu = 1e6
     regions = [0, 1e-3, 1e-2, 1e-1, 0.2, 1]
-    n_samples_list = [1e6, 1e6, 1e6, 1e5, 1e5]
+    n_samples_list = [2e5, 2e5, 2e5, 2e5, 2e5]
 if False:
     E_nu = 1e4
     regions = [0, 1e-3, 1e-2, 1e-1, 0.2, 1]
