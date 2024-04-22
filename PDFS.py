@@ -41,7 +41,7 @@ class mc_cross_section():
             x_set_min = xmin
         x_set_max = xmax
         q2_set_min = pdf.q2Min
-        q2_set_max = 1e3 #self.s
+        q2_set_max = self.s
         print(f'set ranges: x min: {x_set_min}, x max:{x_set_max}, Q2 min:{q2_set_min}, Q2 max{q2_set_max}')
 
         x_samples = np.random.uniform(x_set_min, x_set_max, self.num_samples)
@@ -137,34 +137,34 @@ class mc_cross_section():
 
     def _differential_cs_neutrino_nuclei(self, x, Q2):
         assert Q2 < self.pdf.q2Max, f'Q2 out of range {Q2 - self.pdf.q2Max}'
-        a = 1/(self.Mw*self.Mw + Q2*Q2)**2
+        a = 1/(self.Mw*self.Mw + Q2)**2
         b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2))/(x)
         anti_b = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-3, x, Q2))/(x)
         c = (1 - Q2/(x*self.s))**2
         d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))/(x)
         anti_d = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(4, x, Q2))/(x)
-        return a*((b + anti_b) + c*(d + anti_d))
+        return a*((b) + c*(d))
 
 
 pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
-E_nu = 1e6
+E_nu = 5e3
 n_samples = 100000000
 for i in range(1):
-    x_plit = 1e-5
-    n_samples = int(1e6)
+    x_plit = 1e-3
+    n_samples = int(1e5)
     mc_cs1 = mc_cross_section(E_nu, pdf, n_samples, xmax=x_plit )
     #mc_cs.plot_mc_samples()
     #print(len(str(E_nu)) - 3)
-    cs1 = mc_cs1.calc()
-    #cs1 = mc_cs1.calc_vis()
+    #cs1 = mc_cs1.calc()
+    cs1 = mc_cs1.calc_vis()
     print("xmax=0.1, Cross-Section Neutrino-Proton:", round(cs1/(2.56819e-9), 3), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
 
-    n_samples = int(1e6)
+    n_samples = int(1e5)
     mc_cs2 = mc_cross_section(E_nu, pdf, n_samples, xmin=x_plit, xmax=1)
     #mc_cs.plot_mc_samples()
     #print(len(str(E_nu)) - 3)
-    cs2 = mc_cs2.calc()
-    #cs2 = mc_cs2.calc_vis()
+    #cs2 = mc_cs2.calc()
+    cs2 = mc_cs2.calc_vis()
     print("x0.1-1, Cross-Section Neutrino-Proton:", round(cs2/(2.56819e-9), 3), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
 
     print("tot - x, Cross-Section Neutrino-Proton:", round((cs1+cs2)/(2.56819e-9), 3), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
