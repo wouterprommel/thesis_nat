@@ -59,7 +59,7 @@ class mc_cross_section():
 
     def calc(self):
         integral = self._mc()
-        return (self.GF*self.GF * self.Mw**4)/(2*np.pi) * integral # factor 2 from (N + P)/2
+        return (self.GF*self.GF * self.Mw**4)/(4*np.pi) * integral # factor 2 from (N + P)/2 and another from anti-neutrinos
 
 
     def _mc(self):
@@ -107,9 +107,11 @@ class mc_cross_section():
     def _differential_cs_neutrino_nuclei(self, x, Q2):
         assert Q2 < self.pdf.q2Max, f'Q2 out of range {Q2 - self.pdf.q2Max}'
         a = 1/(self.Mw*self.Mw + Q2*Q2)**2
-        b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2))/(x)
+        b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2) + 
+             self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-3, x, Q2))/(x)
         c = (1 - Q2/(x*self.s))**2
-        d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))/(x)
+        d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2) + 
+             self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(4, x, Q2))/(x)
         return a*(b + c*d)
 
 
@@ -123,8 +125,8 @@ for i in range(*(2,4)):
 pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 E_nu = 5e6
 n_samples = 100000000
-n_samples = int(1e7)
-for i in range(1):
+n_samples = int(1e9)
+for i in range(4):
     mc_cs = mc_cross_section(E_nu, pdf, n_samples)
     #mc_cs.plot_mc_samples()
     #print(len(str(E_nu)) - 3)
