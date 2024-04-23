@@ -1,6 +1,7 @@
 import lhapdf
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def GeV_to_pb(cs):
     return round((cs)/(2.56819e-9), 3)
@@ -24,6 +25,7 @@ class mc_cross_section():
         n_samples_list = [0] + n_samples_list
 
         # regions example [0, 1e-5, 1e-4, 1e-3, 0.1, 1]
+        self.tot_used_points = 0
         for idx in range(1, len(regions)):
 
             num_samples = int(n_samples_list[idx])
@@ -76,6 +78,7 @@ class mc_cross_section():
 
             # total used samples
             num_samples += n_new_samples
+            self.tot_used_points += num_samples
 
             area = len(x_region)/num_samples * ((x_set_max - x_set_min) * (q2_set_max - q2_set_min))
 
@@ -179,11 +182,17 @@ class mc_cross_section():
         d = (2*self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-1, x, Q2) + 4*self.pdf.xfxQ2(-4, x, Q2))/(2*x)
         return a*(b + c*d)
 
-
+df = pd.read_csv('cs.csv')
+print(df)
 
 #pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 pdf = lhapdf.mkPDF("NNPDF40_lo_as_01180")
-if True:
+regions_small = [0, 1e-3, 1e-2, 1e-1, 0.2, 1]
+n_samples_small = [ 1e5, 1e5, 1e5, 1e4, 1e4]
+
+regions = [0, 1e-3, 1e-2, 5e-2, 1e-1, 0.2, 1]
+n_samples = [2e7, 2e6, 2e6, 2e6, 2e6, 2e6]
+if False:
     E_nu = 1e6
     regions = [0, 1e-3, 1e-2, 5e-2, 1e-1, 0.2, 1]
     n_samples_list = [2e6, 2e6, 2e6, 2e6, 2e6, 2e6]
@@ -198,7 +207,16 @@ if False:
     regions = [0, 1e-3, 1e-2, 1e-1, 0.2, 1]
     n_samples_list = [ 1e5, 1e5, 1e5, 1e4, 1e4]
     goal = 44.6
-for i in range(4):
-    mc_cs = mc_cross_section(E_nu, pdf, regions, n_samples_list)
-
-    print("Cross-Section Neutrino-Nucleon:", GeV_to_pb(mc_cs.cs), GeV_to_pb(mc_cs.cs)/(goal), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
+for i in range(16):
+    E_nu = df.at[i, 'E_nu']
+    if E_nu < 1e5:
+        reg = regions_small
+        n_samp = n_samples_small
+    else:
+        reg = regions
+        n_samp = n_samples
+    mc_cs = mc_cross_section(E_nu, pdf, reg, n_samp)
+    print("Cross-Section Neutrino-Nucleon:", GeV_to_pb(mc_cs.cs), GeV_to_pb(mc_cs.cs)/(df.at[i, 'cs']), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
+    df.at[i, 'mc_cs'] = GeV_to_pb(mc_cs.cs)
+    df.at[i, 'used_points'] = mc_cs.tot_used_points
+    df.to_csv('cs.csv', index=False)
