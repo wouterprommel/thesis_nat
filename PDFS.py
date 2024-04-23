@@ -165,7 +165,7 @@ class mc_cross_section():
         b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2))/(x)
         c = (1 - Q2/(x*self.s))**2
         d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))/(x)
-        return a*((b) + c*(d)) 
+        return a*((b) + c*(d))
 
     def _diff_cs_neutrino_nuclei_struc_func(self, x, Q2):
         a = 1/(self.Mw*self.Mw + Q2)**2
@@ -183,7 +183,6 @@ class mc_cross_section():
         return a*(b + c*d)
 
 df = pd.read_csv('cs.csv')
-print(df)
 
 #pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 pdf = lhapdf.mkPDF("NNPDF40_lo_as_01180")
@@ -207,7 +206,7 @@ if False:
     regions = [0, 1e-3, 1e-2, 1e-1, 0.2, 1]
     n_samples_list = [ 1e5, 1e5, 1e5, 1e4, 1e4]
     goal = 44.6
-for i in range(16):
+for i in range(7,8):
     E_nu = df.at[i, 'E_nu']
     if E_nu < 1e5:
         reg = regions_small
@@ -215,8 +214,11 @@ for i in range(16):
     else:
         reg = regions
         n_samp = n_samples
+
     mc_cs = mc_cross_section(E_nu, pdf, reg, n_samp)
-    print("Cross-Section Neutrino-Nucleon:", GeV_to_pb(mc_cs.cs), GeV_to_pb(mc_cs.cs)/(df.at[i, 'cs']), 'pb, at E_nu: 1e', len(str(E_nu)) - 3, 'GeV\n\n')
-    df.at[i, 'mc_cs'] = GeV_to_pb(mc_cs.cs)
-    df.at[i, 'used_points'] = mc_cs.tot_used_points
-    df.to_csv('cs.csv', index=False)
+
+    print("Cross-Section Neutrino-Nucleon:", GeV_to_pb(mc_cs.cs), GeV_to_pb(mc_cs.cs)/(df.at[i, 'cs']), 'pb, at E_nu: ', df.at[i, 'E_nu'], 'GeV\n\n')
+    if False:
+        df.at[i, 'mc_cs'] = GeV_to_pb(mc_cs.cs)
+        df.at[i, 'used_points'] = mc_cs.tot_used_points
+        df.to_csv('cs.csv', index=False)
