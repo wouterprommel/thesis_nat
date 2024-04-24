@@ -52,6 +52,12 @@ class mc_cross_section():
             # validate points
             bool_array = x_samples * self.s > Q2_samples
 
+            bool_array2 = self.Mn*self.Mn + Q2_samples*(1 - x_samples)/x_samples > 4 # should be True for all
+            print('number of sample below resonance prod threshold', sum(bool_array2))
+            print('number of sample below resonance prod threshold', num_samples - sum(bool_array2))
+        #assert self.Mn*self.Mn + Q2*(1-x)/x > 4, 'W2 is below resonance production threshold'
+
+            bool_array = bool_array & bool_array2
             # usable region
             x_region = x_samples[bool_array]
             Q2_region = Q2_samples[bool_array]
@@ -72,6 +78,11 @@ class mc_cross_section():
             # validate new samples
             bool_array = x_samples * self.s > Q2_samples
 
+            #bool_array2 = self.Mn*self.Mn + Q2_samples/x_samples - Q2_samples > 4 
+            bool_array2 = self.Mn*self.Mn + Q2_samples*(1 - x_samples)/x_samples > 4 
+            print('number of sample below resonance prod threshold', n_new_samples - sum(bool_array2))
+
+            bool_array = bool_array & bool_array2
             # add usable samples to the region
             x_region = np.concatenate((x_region, x_samples[bool_array]), axis=0)
             Q2_region = np.concatenate((Q2_region, Q2_samples[bool_array]), axis=0)
@@ -161,6 +172,7 @@ class mc_cross_section():
 
     def _diff_cs_neutrino_nuclei(self, x, Q2):
         assert Q2 < self.pdf.q2Max, f'Q2 out of range {Q2 - self.pdf.q2Max}'
+        assert self.Mn*self.Mn + Q2*(1-x)/x > 4, 'W2 is below resonance production threshold'
         a = 1/(self.Mw*self.Mw + Q2)**2
         b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2))/(x)
         c = (1 - Q2/(x*self.s))**2
@@ -182,6 +194,8 @@ class mc_cross_section():
         d = (2*self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-1, x, Q2) + 4*self.pdf.xfxQ2(-4, x, Q2))/(2*x)
         return a*(b + c*d)
 
+print(np.array([True, True, False]) & np.array([False, True, False]))
+
 df = pd.read_csv('cs.csv')
 
 #pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
@@ -190,7 +204,8 @@ regions_small = [0, 1e-3, 1e-2, 1e-1, 0.2, 1]
 n_samples_small = [ 1e5, 1e5, 1e5, 1e4, 1e4]
 
 regions = [0, 1e-3, 1e-2, 5e-2, 1e-1, 0.2, 1]
-n_samples = [2e7, 2e6, 2e6, 2e6, 2e6, 2e6]
+#n_samples = [2e7, 2e6, 2e6, 2e6, 2e6, 2e6]
+n_samples = [2e6, 2e5, 2e5, 2e5, 2e5, 2e5]
 if False:
     E_nu = 1e6
     regions = [0, 1e-3, 1e-2, 5e-2, 1e-1, 0.2, 1]
