@@ -26,7 +26,8 @@ class cs_neutrino_nucleon:
         xmin = lambda q2: np.max([pdf.xMin, q2/self.s])
         #print('xmin', xmin(1.2), xmin(2), xmin(1000))
         #sigma, err = integrate.dblquad(self._ddiff_neutrino_nucleon, pdf.q2Min, self.s, xmin, pdf.xMax)
-        sigma, err = integrate.dblquad(self._ddiff2, pdf.q2Min, self.s, xmin, pdf.xMax)
+        qmax = np.min([self.s, (500*self.Mw)**2])
+        sigma, err = integrate.dblquad(self._ddiff2, pdf.q2Min, qmax, xmin, pdf.xMax)
         return sigma, err
     
     def _ddiff_neutrino_nucleon(self, x, q2):
@@ -53,6 +54,10 @@ df = pd.read_csv('cs_3.csv')
 #pdf = lhapdf.mkPDF("NNPDF40_lo_as_01180")
 pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 
+#df['PDF21'] = 19*[0.0]
+#df['PDF31'] = 19*[0.0]
+#df['PDF40'] = 19*[0.0]
+
 for i in range(0, 19):
     E_nu = df.at[i, 'E_nu']
     cs = cs_neutrino_nucleon(E_nu, pdf)
@@ -61,7 +66,7 @@ for i in range(0, 19):
     print(GeV_to_pb(sigma), err)
 
     if True:
-        df.at[i, 'mc_cs'] = GeV_to_pb(sigma)
+        df.at[i, 'PDF31'] = GeV_to_pb(sigma)
         df.at[i, 'err'] = err 
         df.at[i, 'used_points'] = cs.calc_count
         df.to_csv('cs_3.csv', index=False)
