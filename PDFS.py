@@ -28,7 +28,7 @@ class mc_cross_section():
         self.tot_used_points = 0
         for idx in range(1, len(regions)):
 
-            num_samples = int(n_samples_list[idx])
+            self.num_samples = int(n_samples_list[idx])
             xmin = regions[idx - 1]
             xmax = regions[idx]
 
@@ -40,36 +40,34 @@ class mc_cross_section():
             x_set_max = xmax
 
             q2_set_min = pdf.q2Min
-            q2_set_max = self.s
+            q2_set_max = 1e4 #self.s
 
             #print(f'set ranges: x min: {x_set_min}, x max:{x_set_max}, Q2 min:{q2_set_min}, Q2 max{q2_set_max}')
 
             # initial sample points
-            x_samples = np.random.uniform(x_set_min, x_set_max, num_samples)
-            Q2_samples = np.random.uniform(q2_set_min, q2_set_max, num_samples)
+            x_samples = np.random.uniform(x_set_min, x_set_max, self.num_samples)
+            Q2_samples = np.random.uniform(q2_set_min, q2_set_max, self.num_samples)
             #self.area = ((1 - pdf.xMin) * (self.s - pdf.q2Min))
 
             # validate points
             bool_array = x_samples * self.s > Q2_samples
 
             bool_array2 = self.Mn*self.Mn + Q2_samples*(1 - x_samples)/x_samples > 4 # should be True for all
-            print('number of sample below resonance prod threshold', sum(bool_array2))
-            print('number of sample below resonance prod threshold', num_samples - sum(bool_array2))
-        #assert self.Mn*self.Mn + Q2*(1-x)/x > 4, 'W2 is below resonance production threshold'
+            #print('number of sample below resonance prod threshold', self.num_samples - sum(bool_array2))
 
             bool_array = bool_array & bool_array2
             # usable region
             x_region = x_samples[bool_array]
             Q2_region = Q2_samples[bool_array]
-            f = len(x_region)/num_samples
+            f = len(x_region)/self.num_samples
             # number of new samples needed based on fraction of usable points
             if f == 0:
-                n_new_samples = num_samples
+                n_new_samples = self.num_samples
             else:
-                n_new_samples = round((num_samples - sum(bool_array))/(sum(bool_array)/num_samples))
+                n_new_samples = round((self.num_samples - sum(bool_array))/(sum(bool_array)/self.num_samples))
 
-            if n_new_samples >= num_samples*5:
-                n_new_samples = num_samples*5
+            if n_new_samples >= self.num_samples*5:
+                n_new_samples = self.num_samples*5
 
             # new samples
             x_samples = np.random.uniform(x_set_min, x_set_max, n_new_samples)
@@ -80,7 +78,7 @@ class mc_cross_section():
 
             #bool_array2 = self.Mn*self.Mn + Q2_samples/x_samples - Q2_samples > 4 
             bool_array2 = self.Mn*self.Mn + Q2_samples*(1 - x_samples)/x_samples > 4 
-            print('number of sample below resonance prod threshold', n_new_samples - sum(bool_array2))
+            #print('number of sample below resonance prod threshold', n_new_samples - sum(bool_array2))
 
             bool_array = bool_array & bool_array2
             # add usable samples to the region
@@ -88,10 +86,11 @@ class mc_cross_section():
             Q2_region = np.concatenate((Q2_region, Q2_samples[bool_array]), axis=0)
 
             # total used samples
-            num_samples += n_new_samples
-            self.tot_used_points += num_samples
+            self.num_samples += n_new_samples
+            self.tot_used_points += self.num_samples
 
-            area = len(x_region)/num_samples * ((x_set_max - x_set_min) * (q2_set_max - q2_set_min))
+            #area = len(x_region)/self.num_samples * ((x_set_max - x_set_min) * (q2_set_max - q2_set_min))
+            area = ((x_set_max - x_set_min) * (q2_set_max - q2_set_min))
 
             cs_region = self.calc(x_region, Q2_region, area)
             self.cs += cs_region
@@ -115,7 +114,8 @@ class mc_cross_section():
 
     def calc(self, X, Q2, A):
         integral = self._mc(X, Q2, A)
-        return (self.GF*self.GF * self.Mw**4 * integral)/(2*np.pi) # factor 2 from (N + P)/2   But just 4 for the structure functions bc those are multiplied by 2...
+        #return (self.GF*self.GF * self.Mw**4 * integral)/(2*np.pi) # factor 2 from (N + P)/2   But just 4 for the structure functions bc those are multiplied by 2...
+        return (self.GF*self.GF * integral)/(np.pi) 
 
     def calc_vis(self):
         integral, int_list = self._mc_list()
@@ -150,7 +150,8 @@ class mc_cross_section():
         # int =  func-average * area
         integral *= A / n_samples 
         integral2 *= A / n_samples 
-        integral3 *= A / n_samples 
+        #integral3 *= A / n_samples 
+        integral3 *= A / self.num_samples
         #print(f'Difference between the two integrals:', integral, integral2, integral3, integral/integral2, integral/integral3)
         
         return integral3
@@ -172,8 +173,9 @@ class mc_cross_section():
 
     def _diff_cs_neutrino_nuclei(self, x, Q2):
         assert Q2 < self.pdf.q2Max, f'Q2 out of range {Q2 - self.pdf.q2Max}'
+        assert x > Q2/self.s
         assert self.Mn*self.Mn + Q2*(1-x)/x > 4, 'W2 is below resonance production threshold'
-        a = 1/(self.Mw*self.Mw + Q2)**2
+        a = 1/(1 + Q2/(self.Mw*self.Mw))**2
         b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2))/(x)
         c = (1 - Q2/(x*self.s))**2
         d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))/(x)
@@ -194,9 +196,8 @@ class mc_cross_section():
         d = (2*self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-1, x, Q2) + 4*self.pdf.xfxQ2(-4, x, Q2))/(2*x)
         return a*(b + c*d)
 
-print(np.array([True, True, False]) & np.array([False, True, False]))
 
-df = pd.read_csv('cs.csv')
+df = pd.read_csv('cs_Area.csv')
 
 #pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 pdf = lhapdf.mkPDF("NNPDF40_lo_as_01180")
@@ -204,7 +205,7 @@ regions_small = [0, 1e-3, 1e-2, 1e-1, 0.2, 1]
 n_samples_small = [ 1e5, 1e5, 1e5, 1e4, 1e4]
 
 regions = [0, 1e-3, 1e-2, 5e-2, 1e-1, 0.2, 1]
-#n_samples = [2e7, 2e6, 2e6, 2e6, 2e6, 2e6]
+n_samples = [2e7, 2e6, 2e6, 2e6, 2e6, 2e6]
 n_samples = [2e6, 2e5, 2e5, 2e5, 2e5, 2e5]
 if False:
     E_nu = 1e6
