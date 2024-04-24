@@ -16,9 +16,10 @@ class cs_neutrino_nucleon:
         self.GF = 1.663787e-5
         self.Mw = 80.385
         self.s = 2*E_nu*self.Mn
-        self.error_count = 0
+        self.st = self.s + self.Mn*self.Mn
+
         self.calc_count = 0
-        print(f'Q2 min value:{pdf.q2Min}, s: {self.s}')
+
         assert self.s < self.pdf.q2Max, 'E_nu too high, s > q2max'
     
     def calc(self):
@@ -28,15 +29,10 @@ class cs_neutrino_nucleon:
         sigma, err = integrate.dblquad(self._ddiff2, pdf.q2Min, self.s, xmin, pdf.xMax)
         return sigma, err
     
-    def int_x(self, Q2):
-        xmin = np.max([pdf.xMin, Q2/self.s])
-        sig_q2, err = integrate.quad(self._ddiff_neutrino_nucleon, xmin, 1, args=(Q2,))
-        return sig_q2
-    
     def _ddiff_neutrino_nucleon(self, x, q2):
         self.calc_count += 1
         assert 0 < q2/(self.s * x) < 1, 'y must be between 0 and 1'
-        A = (self.GF*self.GF)/(4*np.pi*(1 + q2/(self.Mw*self.Mw))**2)
+        A = (self.GF*self.GF*self.s)/(self.st*4*np.pi*(1 + q2/(self.Mw*self.Mw))**2)
         Yp = 1 + (1 - q2/(x*self.s))**2
         Ym = 1 - (1 - q2/(x*self.s))**2
         F2 = 2*(self.pdf.xfxQ2(1, x, q2) + self.pdf.xfxQ2(2, x, q2) + self.pdf.xfxQ2(-1, x, q2) + self.pdf.xfxQ2(-2, x, q2) + 2*self.pdf.xfxQ2(3, x, q2) + 2*self.pdf.xfxQ2(-4, x, q2))
@@ -49,7 +45,7 @@ class cs_neutrino_nucleon:
         b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2))
         c = (1 - Q2/(x*self.s))**2
         d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))
-        return A*a*((b) + c*(d))/x
+        return A*a*((b) + c*(d))/(x)
 
 df = pd.read_csv('cs_3.csv')
 
