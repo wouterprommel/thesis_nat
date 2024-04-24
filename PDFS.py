@@ -84,10 +84,14 @@ class mc_cross_section():
             bool_array2 = self.Mn*self.Mn + Q2_samples*(1 - x_samples)/x_samples > 4 
             #print('number of sample below resonance prod threshold', n_new_samples - sum(bool_array2))
 
+
             bool_array = bool_array & bool_array2
             # add usable samples to the region
             x_region = np.concatenate((x_region, x_samples[bool_array]), axis=0)
             Q2_region = np.concatenate((Q2_region, Q2_samples[bool_array]), axis=0)
+
+            bool_array3 = x_region < Q2_region/self.s
+            print(f'x0 is lower than needed?', sum(bool_array3))
 
             # total used samples
             self.num_samples += n_new_samples
