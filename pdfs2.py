@@ -50,7 +50,8 @@ class cs_neutrino_nucleon:
 df = pd.read_csv('cs_3.csv')
 
 #pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
-pdf = lhapdf.mkPDF("NNPDF40_lo_as_01180")
+#pdf = lhapdf.mkPDF("NNPDF40_lo_as_01180")
+pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 
 for i in range(0, 19):
     E_nu = df.at[i, 'E_nu']
