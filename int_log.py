@@ -20,7 +20,6 @@ class cs_neutrino_nucleon:
         self.st = self.s + self.Mn*self.Mn
         self.conv1 = 389379290.4730569
         self.conv = 0.3894e9
-        print(self.conv/self.conv1)
 
         self.calc_count = 0
         assert self.s < self.pdf.q2Max, 'E_nu too high, s > q2max'
@@ -28,7 +27,7 @@ class cs_neutrino_nucleon:
         self.lnQ2min = np.log(pdf.q2Min)
         self.lnQ2max = np.log(self.s)
         self.xmin = pdf.xMin
-        print(f'{self.lnQ2min=}, {self.lnQ2max}')
+        #print(f'{self.lnQ2min=}, {self.lnQ2max}')
 
 
 
@@ -50,23 +49,31 @@ class cs_neutrino_nucleon:
         omy2 = np.power((1-y), 2)
         Yp = 1 + omy2
         Ym = 1 - omy2
-        fact = self.conv * self.GF2 / 4 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) / 2
-        return fact * (Yp * self.pdf.xfxQ2(2001, x, Q2) - y*y * self.pdf.xfxQ2(2002, x, Q2) + Ym * self.pdf.xfxQ2(2003, x, Q2))
+        fact = self.conv * self.GF2 / 4 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) / 4 #for some reason need a extra factor of 2 in python when using the structure functions. # factor 4 when using structure functions writen out.
+        F2 = 2*(self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))
+        xF3 = 2*((self.pdf.xfxQ2(2, x, Q2) - self.pdf.xfxQ2(-2, x, Q2)) + (self.pdf.xfxQ2(1, x, Q2) - self.pdf.xfxQ2(-1, x, Q2)) + 2*self.pdf.xfxQ2(3, x, Q2) - 2*self.pdf.xfxQ2(-4, x, Q2))
+        #return fact * (Yp * self.pdf.xfxQ2(2001, x, Q2) - y*y * self.pdf.xfxQ2(2002, x, Q2) + Ym * self.pdf.xfxQ2(2003, x, Q2))
+        return fact * (Yp * F2 + Ym * xF3)
 
-pdf = lhapdf.mkPDF("NNPDF31sx_nnlonllx_as_0118_LHCb_nf_6_SF")
+#pdf = lhapdf.mkPDF("NNPDF31sx_nnlonllx_as_0118_LHCb_nf_6_SF")
+pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
+#pdf = lhapdf.mkPDF("NNPDF40_lo_as_01180")
+#pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-df['convert'] = 19*[0.0]
+df['log31'] = 19*[0.0]
+# 0, 19 all 
+# 7, 8 for 1e6
 for i in range(0, 19):
     E_nu = df.at[i, 'E_nu']
     cs = cs_neutrino_nucleon(E_nu, pdf)
     sigma = cs.calc()
 #print(cs.calc_count, cs.error_count)
-    print(f'cs: {sigma}, E_nu: {E_nu}')
+    print(f'cs: {sigma}, E_nu: {E_nu}, cs/cs-ref: {sigma/df.at[i, "cs"]}')
 
     if True:
-        df.at[i, 'convert'] = sigma
+        df.at[i, 'log31'] = sigma
         df.to_csv('cs_3.csv', index=False)
 
 import cs_trend
