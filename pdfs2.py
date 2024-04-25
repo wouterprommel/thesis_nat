@@ -64,12 +64,12 @@ class cs_neutrino_nucleon:
     def _ddiff2(self, x, Q2):
         assert 0 < Q2/(self.s * x) < 1, 'y must be between 0 and 1'
         self.calc_count += 1
-        A = (self.GF*self.GF)/np.pi
+        A = (self.GF*self.GF)/np.pi/4
         a = 1/(1 + Q2/(self.Mw*self.Mw))**2
         b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2))
         c = (1 - Q2/(x*self.s))**2
         d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))
-        return A*a*((b) + c*(d))/x
+        return A*a*((b) + c*(d))
     
 df = pd.read_csv('cs_3.csv')
 
@@ -81,16 +81,16 @@ pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 #df['PDF31'] = 19*[0.0]
 #df['PDF40'] = 19*[0.0]
 
-for i in range(0,1):
+for i in range(0,19):
     E_nu = df.at[i, 'E_nu']
     cs = cs_neutrino_nucleon(E_nu, pdf)
-    sigma, err = cs.calc_split()
+    sigma, err = cs.calc()
 #print(cs.calc_count, cs.error_count)
     print(GeV_to_pb(sigma), E_nu)
 
-    if False:
+    if True:
         df.at[i, 'PDF31'] = GeV_to_pb(sigma)
         df.at[i, 'err'] = err 
         df.at[i, 'used_points'] = cs.calc_count
         df.to_csv('cs_3.csv', index=False)
-        import cs_trend
+import cs_trend

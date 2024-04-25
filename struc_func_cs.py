@@ -43,7 +43,6 @@ class cs_neutrino_nucleon:
         return A*(Yp*F2 + Ym*xF3)
     
 
-df = pd.read_csv('cs_3.csv')
 
 pdf = lhapdf.mkPDF("NNPDF31sx_nnlonllx_as_0118_LHCb_nf_6_SF")
 #pdf = lhapdf.mkPDF("NNPDF40_lo_as_01180")
@@ -52,6 +51,7 @@ pdf = lhapdf.mkPDF("NNPDF31sx_nnlonllx_as_0118_LHCb_nf_6_SF")
 #df['PDF21'] = 19*[0.0]
 #df['PDF31'] = 19*[0.0]
 
+df = pd.read_csv('cs_3.csv')
 for i in range(0, 19):
     E_nu = df.at[i, 'E_nu']
     cs = cs_neutrino_nucleon(E_nu, pdf)
