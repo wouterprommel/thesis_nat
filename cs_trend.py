@@ -23,9 +23,15 @@ pdf31 = np.array(df['PDF31'].to_list())
 pdf40 = np.array(df['PDF40'].to_list())/4
 struc = np.array(df['struc'].to_list())
 logstruc = np.array(df['logstruc'].to_list())
+
 log21 = np.array(df['log21'].to_list())
 log31 = np.array(df['log31'].to_list())
 log40 = np.array(df['log40'].to_list())
+
+log21_err = np.array(df['log21_err'].to_list())
+log31_err = np.array(df['log31_err'].to_list())
+log40_err = np.array(df['log40_err'].to_list())
+
 cs = np.array(df['cs'].to_list())
 npoints = np.array(df['used_points'].to_list())
 
@@ -51,12 +57,13 @@ plt.legend()
 plt.show()
 
 if True:
+    #21_err = np.stack(log)
     #plt.plot(s, pdf31/cs, label='frac31')
     #plt.plot(s, struc/cs, label='frac_struc')
     ratio = log21/cs
-    plt.scatter(s[:-6], ratio[:-6], label='PDF2.1 LO')
-    plt.scatter(s, log31/cs, label='PDF3.1 LO')
-    plt.scatter(s, log40/cs, label='PDF4.0 LO')
+    plt.errorbar(s[:-6], ratio[:-6], yerr=21_err, label='PDF2.1 LO')
+    plt.errorbar(s, log31/cs, yerr=31_err, label='PDF3.1 LO')
+    plt.errorbar(s, log40/cs, yerr=40_err, label='PDF4.0 LO')
     plt.scatter(s, logstruc/cs, label='PDF3.1 NLO')
     plt.xscale('log')
     plt.legend()

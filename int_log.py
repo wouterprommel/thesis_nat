@@ -45,10 +45,30 @@ class cs_neutrino_nucleon:
     def calc(self):
         if self.physical:
             cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max)
-            return cs
+            return cs, err
         else:
             print('E_nu to high; s > q2max')
             return None
+    
+    def calc_deviation(self):
+        if self.physical:
+            self.cs_list = []
+            self.err_list = []
+            for i in range(10):
+                cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max)
+                self.cs_list.append(cs)
+                self.err_list.append(err)
+            cs, err = self.deviation()
+            return cs, err 
+
+        else:
+            print('E_nu to high; s > q2max')
+            return None
+
+    def deviation(self):
+        cs = np.mean(self.cs_list)
+        err = np.std(self.cs_list)
+        return cs, err
 
     def diff_lnQ2(self, lnQ2):
         lnxmin = lnQ2 - np.log(self.s)
@@ -89,33 +109,38 @@ class cs_neutrino_nucleon:
 #pdf_struc = lhapdf.mkPDF("NNPDF31sx_nnlonllx_as_0118_LHCb_nf_6_SF")
 pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
-#pdf = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
+pdf_21 = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
+df['log40_err'] = 19*[0.0]
+df['log31_err'] = 19*[0.0]
+df['log21_err'] = 19*[0.0]
 
-for name, pdf in [('log31', pdf_31), ('log40', pdf_40)]:
-#df['log40'] = 19*[0.0]
+for name, pdf in [('log21', pdf_21), ('log31', pdf_31), ('log40', pdf_40)]:
+#for name, pdf in [('log40', pdf_40)]:
 # 0, 19 all 
 # 7, 8 for 1e6
-    for i in range(19, 28): # 19 to end
+    for i in range(0, 19): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
         cs = cs_neutrino_nucleon(E_nu, pdf)
         print('physical', cs.physical)
         if cs.physical:
-            sigma = cs.calc()
+            sigma, err = cs.calc()
         else:
             sigma = 0.0
+            err = 0.0
         dt_end = datetime.datetime.now()
         print(cs.calc_count)
         print()
-        print(f'cs: {sigma}, E_nu: {E_nu}, cs/cs-ref: {sigma/df.at[i, "cs"]}')
+        print(f'cs: {sigma}, err: {err}, E_nu: {E_nu}, cs/cs-ref: {sigma/df.at[i, "cs"]}')
         print(f'Time of calc: {(dt_end - dt_start)}')
         print()
 
         if True:
             df.at[i, name] = sigma
+            df.at[i, name + "_err"] = err
             df.to_csv('cs_3.csv', index=False)
 
 import cs_trend
