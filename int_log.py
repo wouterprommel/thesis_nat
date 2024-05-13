@@ -98,10 +98,11 @@ for name, pdf in [('log31', pdf_31), ('log40', pdf_40)]:
 #df['log40'] = 19*[0.0]
 # 0, 19 all 
 # 7, 8 for 1e6
-    for i in range(0, 19): # 19 to end
+    for i in range(19, 28): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
         cs = cs_neutrino_nucleon(E_nu, pdf)
+        print('physical', cs.physical)
         if cs.physical:
             sigma = cs.calc()
         else:
