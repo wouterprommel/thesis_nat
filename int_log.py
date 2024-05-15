@@ -110,7 +110,7 @@ class cs_neutrino_nucleon:
     
         elif self.target == 'neutron':
             F2 = 2*(self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + self.pdf.xfxQ2(3, x, Q2) + self.pdf.xfxQ2(-4, x, Q2))
-            xF3 = 2*(self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + self.pdf.xfxQ2(3, x, Q2) - self.pdf.xfxQ2(-4, x, Q2))
+            xF3 = 2*( -self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + self.pdf.xfxQ2(3, x, Q2) - self.pdf.xfxQ2(-4, x, Q2))
 
 
         # NLO
@@ -125,8 +125,8 @@ pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 
 df = pd.read_csv('cs_3.csv')
 name = 'neutron_pdf31'
-df[name] = 19*[0.0]
-df[name + '_err'] = 19*[0.0]
+#df[name] = 19*[0.0]
+#df[name + '_err'] = 19*[0.0]
 
 for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
 #for name, pdf in [('log40', pdf_40)]:
