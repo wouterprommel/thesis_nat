@@ -39,6 +39,7 @@ err31 = np.stack([log31 + log31_err, log31 - log31_err])
 err40 = np.stack([log40 + log40_err, log40 - log40_err])
 
 cs = np.array(df['cs'].to_list())
+anti_cs = np.array(df['anti_cs'].to_list())
 npoints = np.array(df['used_points'].to_list())
 
 
@@ -47,6 +48,14 @@ proton_pdf31_err = np.array(df['proton_pdf31_err'].to_list())
 
 neutron_pdf31 = np.array(df['neutron_pdf31'].to_list())
 neutron_pdf31_err = np.array(df['neutron_pdf31_err'].to_list())
+
+anti_proton_pdf31 = np.array(df['anti_proton_pdf31'].to_list())
+anti_proton_pdf31_err = np.array(df['anti_proton_pdf31_err'].to_list())
+
+anti_neutron_pdf31 = np.array(df['anti_neutron_pdf31'].to_list())
+anti_neutron_pdf31_err = np.array(df['anti_neutron_pdf31_err'].to_list())
+
+anti_pdf31 = np.array(df['anti_pdf31'].to_list())
 
 mean = (proton_pdf31 + neutron_pdf31) / 2
 print(neutron_pdf31.shape)
@@ -76,6 +85,19 @@ axis.set_xlabel(r'$E_{\nu}$')
 axis.set_ylabel(r'$\sigma_{\nu} /\ \sigma_{\nu}^{ref}$')
 plt.legend()
 plt.savefig(f"Figs/proton_ratio.pdf", format="pdf", bbox_inches="tight")
+plt.show()
+
+
+fig, axis = plt.subplots()
+axis.errorbar(E, anti_proton_pdf31/anti_cs, fmt='.', label='proton pdf31 LO')
+axis.errorbar(E, anti_neutron_pdf31/anti_cs, fmt='.', label='neutron pdf31 LO')
+axis.errorbar(E, anti_pdf31/cs, fmt=".", label='isoscalar pdf31 LO')
+axis.set_xscale('log')
+axis.set_yscale('log')
+axis.set_xlabel(r'$E_{\bar{\nu}}$')
+axis.set_ylabel(r'$\sigma_{\bar{\nu}} /\ \sigma_{\bar{\nu}}^{ref}$')
+plt.legend()
+plt.savefig(f"Figs/anti_proton_ratio.pdf", format="pdf", bbox_inches="tight")
 plt.show()
 
 if False:

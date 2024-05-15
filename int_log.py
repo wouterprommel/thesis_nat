@@ -141,7 +141,7 @@ pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'anti_proton_pdf31'
+name = 'anti_neutron_pdf31'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
@@ -152,7 +152,7 @@ for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
     for i in range(0, 19): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
-        cs = cs_neutrino_nucleon(E_nu, pdf, anti=True, target='proton')
+        cs = cs_neutrino_nucleon(E_nu, pdf, anti=True, target='neutron')
         print('physical', cs.physical)
         if cs.physical:
             sigma, err = cs.calc()
