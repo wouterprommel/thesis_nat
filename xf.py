@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pandas as pd
+import path
 
 pdf21 = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 pdf31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
@@ -123,9 +124,9 @@ def plot_quarks_MSE(q2_space, results):
             #axis[1, 2].plot(q2_space, 
 
     if all:
-        plt.savefig(f"Figs/diff234.pdf", format="pdf", bbox_inches="tight")
+        plt.savefig(path.fig_path() + "diff234.pdf", format="pdf", bbox_inches="tight")
     else:
-        plt.savefig(f"Figs/diff34_x9.pdf", format="pdf", bbox_inches="tight")
+        plt.savefig(path.fig_path() + "diff34_x9.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
 def diff_234():
