@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import path
 
 plt.style.use('seaborn-v0_8-colorblind')
 #plt.style.use('Solarize_Light2')
@@ -20,9 +21,9 @@ ref_w = np.array(df_w['cs'])
 
 E = np.array(df['E_nu'].to_list())
 s = 2*0.938*np.array(df['E_nu'].to_list())
-pdf21 = np.array(df['PDF21'].to_list())/4
+pdf21 = np.array(df['PDF21'].to_list())
 pdf31 = np.array(df['PDF31'].to_list())
-pdf40 = np.array(df['PDF40'].to_list())/4
+pdf40 = np.array(df['PDF40'].to_list())
 struc = np.array(df['struc'].to_list())
 logstruc = np.array(df['logstruc'].to_list())
 
@@ -57,11 +58,16 @@ anti_neutron_pdf31_err = np.array(df['anti_neutron_pdf31_err'].to_list())
 
 anti_pdf31 = np.array(df['anti_pdf31'].to_list())
 
+pdf31_x7 = np.array(df['pdf31_x7'].to_list())
+pdf31_x7_err = np.array(df['pdf31_x7_err'].to_list())
+pdf40_x7 = np.array(df['pdf40_x7'].to_list())
+pdf40_x7_err = np.array(df['pdf40_x7_err'].to_list())
+
 mean = (proton_pdf31 + neutron_pdf31) / 2
 print(neutron_pdf31.shape)
 print(mean.shape)
 
-if True:
+if False:
     fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
     axis[0].errorbar(E, proton_pdf31, yerr=proton_pdf31_err, linestyle='-', marker='.', label='proton PDF31 LO')
     axis[0].errorbar(E, neutron_pdf31, yerr=neutron_pdf31_err, linestyle='-', marker='.', label='neutron PDF31 LO')
@@ -84,7 +90,7 @@ if True:
     plt.show()
 
 
-if True:
+if False:
     fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
     axis[0].errorbar(E, anti_proton_pdf31, linestyle='-', marker='.', label='anti-proton PDF31 LO')
     axis[0].errorbar(E, anti_neutron_pdf31, linestyle='-', marker='.', label='anti-neutron PDF31 LO')
@@ -105,16 +111,22 @@ if True:
     plt.show()
 
 if True:
-    fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
+    x31 = pdf31_x7
+    x31_err = pdf31_x7_err
+    x40 = pdf40_x7
+    x40_err = pdf40_x7_err
+    x21 = log21
+    x21_err = log21_err
 
+    fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
     #plt.plot(E_nu, ref_cs, label='ref')
     #plt.plot(E_nu2, ref_w, label='w')
     #plt.plot(E, pdf21, label='pdf21')
     #plt.plot(E, pdf31, label='pdf31')
     axis[0].errorbar(E, logstruc, linestyle='-', marker='.', label='PDF3.1 NLO')
-    axis[0].errorbar(E, log21, yerr=log21_err, linestyle='-', marker='.', label='PDF2.1 LO')
-    axis[0].errorbar(E, log31, yerr=log31_err, linestyle='-', marker='.', label='PDF3.1 LO')
-    axis[0].errorbar(E, log40, yerr=log40_err, linestyle='-', marker='.', label='PDF4.0 LO')
+    axis[0].errorbar(E, x21, yerr=x21_err, linestyle='-', marker='.', label='PDF2.1 LO')
+    axis[0].errorbar(E, x31, yerr=x31_err, linestyle='-', marker='.', label='PDF3.1 LO')
+    axis[0].errorbar(E, x40, yerr=x40_err, linestyle='-', marker='.', label='PDF4.0 LO')
     axis[0].errorbar(E, cs, linestyle='-', marker='.', label='reference')
     #pltot(E, pdf40, label='pdf40')
     #pltot(E, struc, label='struc')
@@ -133,17 +145,17 @@ if True:
     #plt.plot(s, pdf31/cs, label='frac31')
     #plt.plot(s, struc/cs, label='frac_struc')
     #fig, axis = plt.subplots()
-    ratio = log21/cs
-    err_r = log21_err/cs
+    ratio = x21/cs
+    err_r = x21_err/cs
     axis[1].errorbar(E, logstruc/cs, linestyle='-', marker='.', label='PDF3.1 NLO')
     axis[1].errorbar(E[:-6], ratio[:-6], yerr=err_r[:-6], linestyle='-', marker='.', label='PDF2.1 LO')
-    axis[1].errorbar(E, log31/cs, yerr=log31_err/cs, linestyle='-', marker='.', label='PDF3.1 LO')
-    axis[1].errorbar(E, log40/cs, yerr=log40_err/cs, linestyle='-', marker='.', label='PDF4.0 LO')
+    axis[1].errorbar(E, x31/cs, yerr=x31_err/cs, linestyle='-', marker='.', label='PDF3.1 LO')
+    axis[1].errorbar(E, x40/cs, yerr=x40_err/cs, linestyle='-', marker='.', label='PDF4.0 LO')
     axis[1].set_xscale('log')
     #axis[1].legend()
     #axis[1].set_xlabel('Neutrino Energy [GeV]')
     axis[1].set_xlim(1e3, 1e10)
     axis[1].set_ylabel(r'$\sigma_{\nu} /\ \sigma_{\nu}^{ref}$')
 
-    plt.savefig(f"Figs/pdfs.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(path.fig_path() + "pdfs_x7.pdf", format="pdf", bbox_inches="tight")
     plt.show()

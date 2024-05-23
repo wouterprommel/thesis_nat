@@ -38,7 +38,8 @@ class cs_neutrino_nucleon:
         #self.lnQ2min = pdf.q2Min
         #self.lnQ2max = self.s
 
-        self.xmin = pdf.xMin
+        #self.xmin = pdf.xMin
+        self.xmin = 1e-7
         #print(f'{self.lnQ2min=}, {self.lnQ2max}')
 
         self.calc_count = 0
@@ -135,24 +136,24 @@ class cs_neutrino_nucleon:
             return fact * (Yp * F2 - Ym * xF3)
 
 #pdf_struc = lhapdf.mkPDF("NNPDF31sx_nnlonllx_as_0118_LHCb_nf_6_SF")
-pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
-#pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
+#pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
+pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
 #pdf_21 = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'anti_neutron_pdf31'
+name = 'pdf40_x7'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
-for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
+for name, pdf in [(name, pdf_40)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
 #for name, pdf in [('log40', pdf_40)]:
 # 0, 19 all 
 # 7, 8 for 1e6
     for i in range(0, 19): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
-        cs = cs_neutrino_nucleon(E_nu, pdf, anti=True, target='neutron')
+        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar')
         print('physical', cs.physical)
         if cs.physical:
             sigma, err = cs.calc()
@@ -171,4 +172,4 @@ for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
             df.at[i, name + "_err"] = err
             df.to_csv('cs_3.csv', index=False)
 
-import cs_trend
+#import cs_trend
