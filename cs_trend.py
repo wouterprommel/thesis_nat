@@ -63,6 +63,10 @@ pdf31_x7_err = np.array(df['pdf31_x7_err'].to_list())
 pdf40_x7 = np.array(df['pdf40_x7'].to_list())
 pdf40_x7_err = np.array(df['pdf40_x7_err'].to_list())
 
+
+pdf31_strange40 = np.array(df['pdf31_strange40'].to_list())
+pdf31_strange40_err = np.array(df['pdf31_strange40_err'].to_list())
+
 mean = (proton_pdf31 + neutron_pdf31) / 2
 print(neutron_pdf31.shape)
 print(mean.shape)
@@ -125,6 +129,7 @@ if True:
     #plt.plot(E, pdf31, label='pdf31')
     axis[0].errorbar(E, logstruc, linestyle='-', marker='.', label='PDF3.1 NLO')
     axis[0].errorbar(E, x21, yerr=x21_err, linestyle='-', marker='.', label='PDF2.1 LO')
+    #axis[0].errorbar(E, pdf31_strange40, yerr=pdf31_strange40_err, linestyle='-', marker='.', label='PDF3.1  with PDF4 for strange')
     axis[0].errorbar(E, x31, yerr=x31_err, linestyle='-', marker='.', label='PDF3.1 LO')
     axis[0].errorbar(E, x40, yerr=x40_err, linestyle='-', marker='.', label='PDF4.0 LO')
     axis[0].errorbar(E, cs, linestyle='-', marker='.', label='reference')
@@ -149,6 +154,7 @@ if True:
     err_r = x21_err/cs
     axis[1].errorbar(E, logstruc/cs, linestyle='-', marker='.', label='PDF3.1 NLO')
     axis[1].errorbar(E[:-6], ratio[:-6], yerr=err_r[:-6], linestyle='-', marker='.', label='PDF2.1 LO')
+    #axis[1].errorbar(E, pdf31_strange40/cs, yerr=pdf31_strange40_err/cs, linestyle='-', marker='.', label='PDF3.1  with PDF4 for strange')
     axis[1].errorbar(E, x31/cs, yerr=x31_err/cs, linestyle='-', marker='.', label='PDF3.1 LO')
     axis[1].errorbar(E, x40/cs, yerr=x40_err/cs, linestyle='-', marker='.', label='PDF4.0 LO')
     axis[1].set_xscale('log')
@@ -157,5 +163,14 @@ if True:
     axis[1].set_xlim(1e3, 1e10)
     axis[1].set_ylabel(r'$\sigma_{\nu} /\ \sigma_{\nu}^{ref}$')
 
-    plt.savefig(path.fig_path() + "pdfs_x7.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(path.fig_path() + "TBA.pdf", format="pdf", bbox_inches="tight")
+    plt.show()
+
+if False:
+    SE23 = np.square(log21 - pdf31_x7)
+    SE24 = np.square(log21 - pdf40_x7)
+    SE34 = np.square(pdf31_x7 - pdf40_x7)
+    plt.plot(SE23, label='SE23')
+    plt.plot(SE34, label='SE34')
+    plt.plot(SE24, label='SE24')
     plt.show()
