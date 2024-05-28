@@ -20,8 +20,8 @@ class cs_neutrino_nucleon:
         self.Mw2 = Mw*Mw
         self.s = 2*E_nu*self.Mn
         self.st = self.s + self.Mn*self.Mn
-        self.conv_p = 389379290.4730569
-        self.conv = 0.3894e9
+        self.convert_p = 389379290.4730569
+        self.convert = 0.3894e9
 
         self.target = target 
         self.anti = anti
@@ -118,6 +118,32 @@ class cs_neutrino_nucleon:
                 F2 = 2*(self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + self.pdf.xfxQ2(-3, x, Q2) + self.pdf.xfxQ2(4, x, Q2))
                 xF3 = 2*(+self.pdf.xfxQ2(1, x, Q2) - self.pdf.xfxQ2(-2, x, Q2) - self.pdf.xfxQ2(-3, x, Q2) + self.pdf.xfxQ2(4, x, Q2))
         return F2, xF3
+    def f(i, x, Q2):
+        if i == 1:
+
+
+
+
+        elif i == 2:
+            pass 
+        elif i == 3:
+            pass 
+        return f
+
+    def NLO(self, x, Q2):
+        quarks = ['up', 'down', 'strange', 'charm']
+        anti_quarks = ['anti-up', 'anti-down', 'anti-strange', 'anti-charm']
+        #flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
+        #anti_flavours = {'anti-up':-2, 'anti-down':-1, 'anti-strange':-3, 'anti-charm':-4}
+        #f1 = {'up':0.0, 'down':0.0, 'strange':0.0, 'charm':0.0,}
+        #f1a = {'anti-up':0.0, 'anti-down':0.0, 'anti-strange':0.0, 'anti-charm':0.0}
+        flavours = {'up':2, 'anti-up':-2, 'down':1, 'anti-down':-1, 'strange':3, 'anti-strange':-3, 'charm':4, 'anti-charm':-4}
+        f1 = {'up':0.0, 'anti-up':0.0, 'down':0.0, 'anti-down':0.0, 'strange':0.0, 'anti-strange':0.0, 'charm':0.0, 'anti-charm':0.0}
+        f1 = self.f(1, x, Q2)
+        f1_g = 0
+        g = self.pdf(21, x, Q2)
+
+        F1 = [self.convolution(flavours[qi], f1[qi]) for qi in quarks] + [self.convolution(flavours[aqi], f1[aqi]) for aqi in anti_quarks] + self.convolution(g, f1_g)
 
     def ddiff_lnx_lnQ2(self, lnx, Q2):
         self.calc_count += 1
@@ -131,28 +157,29 @@ class cs_neutrino_nucleon:
         omy2 = np.power((1-y), 2)
         Yp = 1 + omy2
         Ym = 1 - omy2
-        fact = self.conv * self.GF2 / 4 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2)
+        fact = self.convert * self.GF2 / 4 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2)
 
-        #F2, xF3 = self.struc(x, Q2)
-        F1, F2, xF3 = self.NLO(x, Q2)
         if self.NLO:
-            return ... ...
-
-        elif self.anti:
-            return fact * (Yp * F2 + Ym * xF3)
-        else:
+            F1, F2, xF3 = self.NLO(x, Q2)
+            return fact * (F1 + F2 + xF3)
             # NLO from paper
             #return fact * (Yp * self.pdf.xfxQ2(2001, x, Q2) - y*y * self.pdf.xfxQ2(2002, x, Q2) + Ym * self.pdf.xfxQ2(2003, x, Q2))
+
+        elif self.anti:
+            F2, xF3 = self.struc(x, Q2)
             return fact * (Yp * F2 - Ym * xF3)
+        else:
+            F2, xF3 = self.struc(x, Q2)
+            return fact * (Yp * F2 + Ym * xF3)
 
 #pdf_struc = lhapdf.mkPDF("NNPDF31sx_nnlonllx_as_0118_LHCb_nf_6_SF")
 pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
-pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
+#pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
 #pdf_21 = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf31_strange40'
+name = 'pdf31_DIY'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
