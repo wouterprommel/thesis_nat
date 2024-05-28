@@ -69,7 +69,7 @@ class cs_neutrino_nucleon:
         b = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2))
         c = (1 - Q2/(x*self.s))**2
         d = (self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))
-        return A*a*((b) + c*(d))
+        return A*a*((b) + c*(d)) / x
     
 df = pd.read_csv('cs_3.csv')
 
