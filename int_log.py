@@ -40,7 +40,7 @@ class cs_neutrino_nucleon:
         #self.lnQ2max = self.s
 
         #self.xmin = pdf.xMin
-        self.xmin = 1e-7
+        self.xmin = 1e-2
         #print(f'{self.lnQ2min=}, {self.lnQ2max}')
 
         self.calc_count = 0
@@ -207,7 +207,8 @@ class cs_neutrino_nucleon:
         #Q2 = 100
         if self.calc_count % 1000 == 0:
         #if self.calc_count % 100000 == 0:
-            print(f'{self.calc_count=}')
+           # print(f'{self.calc_count=}')
+            pass
         #    quit()
 
         y = Q2 / x / self.s
@@ -239,7 +240,7 @@ pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf31_NLO'
+name = 'pdf31_LO_x2'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
@@ -250,7 +251,7 @@ for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
     for i in range(0, 19): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
-        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True)
+        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=False)
         print('physical', cs.physical)
         if cs.physical:
             sigma, err = cs.calc()
