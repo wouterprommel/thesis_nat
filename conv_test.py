@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import integrate
 from scipy import signal
+from datetime import datetime as dt
+from tqdm import tqdm
+import path
 
 def delta_old(x):
     epsilon = 0.001
@@ -57,21 +60,79 @@ def conv2(C, q, x, Q2):
     #print(conv.max())
     return conv.sum()
 
-def Cg_conv_g(x, Q2):
-    f = lambda z: 6*pdf.xfxQ2(21, z, Q2)/z # g
-    f2 = lambda z: 6*pdf.xfxQ2(21, z, Q2) # z*g
-    int, err = integrate.quad(f, x, 1)
-    int2, err = integrate.quad(f2, x, 1)
-    return int - int2
+def gs(xs, Q2):
+    g = np.array([pdf.xfxQ2(21, x, Q2)/x for x in xs])
+    return g
 
+def g(x, Q2):
+    g = pdf.xfxQ2(21, x, Q2)/x
+    return g
+
+def Cg_conv_g(x, Q2):
+    f = lambda z: (6*(x/z/z * (1 - x)) + (1/z - 2*x/z/z + x*x/z/z/z) *np.log((z- x)/x) )* g(z, Q2)
+    int, err = integrate.quad(f, x, 1)
+    #f2 = lambda z: (1/z - 2*x/z/z + x*x/z/z/z) *np.log((z- x)/x)* g(z, Q2)
+    #int2, err = integrate.quad(f2, x, 1)
+    #print(f'{int=} \n{int2=}')
+    return int #+ int2
 
 pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 
-#conv = convolution(C1q, 1, 0.1, 1000)
-x = 0.01
-Q2 = 1000
-#conv2 = conv2(Cq_lo, 1, x, 1000)
-int = Cg_conv_g(x, Q2)
-print(int)
-print(pdf.xfxQ2(21, x, Q2))
-#print(conv2)
+def gluon():
+    #conv = convolution(C1q, 1, 0.1, 1000)
+    X = np.logspace(-7, 1, 1000, endpoint=False)
+    X = X[X < 1.0]
+    Q2 = 1e6
+    R = []
+    G = []
+    for x in tqdm(X):
+        R.append(Cg_conv_g(x, Q2) * x)
+        G.append(pdf.xfxQ2(21, x, Q2))
+    plt.plot(X, R, label='x * C @ g')
+    plt.plot(X, G, label='x * gluon')
+    plt.xscale('log')
+    plt.xlabel('x')
+    plt.legend()
+    plt.savefig(path.fig_path() + "C_g_x7_Q6.pdf", format="pdf", bbox_inches="tight")
+    plt.show()
+
+
+    x = 1e-3
+    #test()
+
+    #conv2 = conv2(Cq_lo, 1, x, 1000)
+    s = dt.now()
+    int = Cg_conv_g(x, Q2)
+    e = dt.now()
+    print('result int:', int)
+    print('gluon value: ', pdf.xfxQ2(21, x, Q2)/x)
+    print('took: ', e - s)
+    #print(conv2)
+
+def Cq_conv_q(x, Q2):
+    Caa = lambda z: (1 + x*x/z/z) * np.log(1 - x/z)/(z - x) #* (pdf.xfxQ2(1, x, Q2)/x)
+    Cb = lambda z: -(1 + x*x/z/z)/(z - x) * np.log(x/z) #* (pdf.xfxQ2(1, x, Q2)/x) # added Cd
+    Cd = lambda z: 3 + 2*z
+    Ce = - pdf.xfxQ2(1, x, Q2)/x * (9/2 + np.pi**2 /3)
+    Cca = lambda z: - 3/2 * (1/(z-x))
+    C = lambda z: (Caa(z) + Cb(z) + Cca(z) + Cd(z)) * (pdf.xfxQ2(1, x, Q2)/x)
+    int_y, _ = integrate.quad(lambda y: np.log(1 - y)/(1 - y), 0, 1)
+    int_y2, _ = integrate.quad(lambda y: 1/(1 - y), 0, 1)
+    print(int_y)
+    print(Ce)
+    Cab = - pdf.xfxQ2(1, x, Q2)/x * 2 * int_y
+    Ccb = pdf.xfxQ2(1, x, Q2)/x * 3 / 2 * int_y2
+    int, _ = integrate.quad(C, x, 1)
+    #int2, _ = integrate.quad(Caa, x, 1)
+    return int +Cab + Ccb + Ce
+
+
+#x = 4e-7
+x = 0.04#4e-3
+Q2 = 1e6
+s = dt.now()
+int = Cq_conv_q(x, Q2)
+e = dt.now()
+print('result int:', int)
+print('quark value: ', pdf.xfxQ2(1, x, Q2)/x)
+print('took: ', e - s)
