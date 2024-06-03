@@ -52,9 +52,9 @@ class cs_neutrino_nucleon:
             self.pbar = tqdm(total=2e6)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
+
                 cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max)
             self.pbar.close()
-            print(f'Took {self.calc_count} cals to ddif_sigma')
             return cs, err
         else:
             print('E_nu to high; s > q2max')
@@ -123,84 +123,6 @@ class cs_neutrino_nucleon:
                 xF3 = 2*(+self.pdf.xfxQ2(1, x, Q2) - self.pdf.xfxQ2(-2, x, Q2) - self.pdf.xfxQ2(-3, x, Q2) + self.pdf.xfxQ2(4, x, Q2))
         return F2, xF3
 
-
-    def delta(self, x):
-        epsilon = 0.001
-        if x <= epsilon and x >= -epsilon:
-            return 1.0
-        else:
-            return 0.0
-
-    def Cqiz(self, z):
-        '''Coefficient function for the quarks'''
-        a = (1 + z*z) * (np.log(1 - z)/(1 - z))
-        b = - np.divide((1 + z*z), (1 - z)) * np.log(z)
-        c = -3/2 / (1 - z) + 3 + 2*z
-        d = -(9/2 + np.pi*np.pi/3) * self.delta(1 - z)
-
-        return a + b + c + d -2*z
-        #elif i == 2:
-        #    return a + b + c + d 
-        #elif i == 3:
-        #    return a + b + c + d - (1 + z) 
-    def Cg(self, z):
-        a = np.power((1 - z), 2) + z*z
-        b = np.log((1 - z) / z)
-        c = 6*z*(1 - z)
-        return a*b + c + 4*z*(1 - z)
-    
-    def Cq_lo(self, z):
-        return self.delta(1 - z)
-    
-    def convolution(self, C, q, x, Q2):
-        conv_int = lambda  z: C(x/z) * self.pdf.xfxQ2(q, z, Q2) / z
-        conv, err = integrate.quad(conv_int, x, 1)
-        return conv
-
-    def struc_NLO(self, x, Q2):
-        quarks = ['up', 'down', 'strange', 'charm']
-        flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
-        anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
-        K1 = {'up':1/4, 'down':1/4, 'strange':1/4, 'charm':1/4,}
-        K2 = {'up':1/2, 'down':1/2, 'strange':1/2, 'charm':1/2,}
-
-        print(f'alpha Q2:{self.pdf.alphasQ2(Q2)}, \nconvolution quark down: {self.convolution(self.Cqiz, flavours["down"], x, Q2)}, \nconvolution gluon: {self.convolution(self.Cg, 21, x, Q2)}')
-        xF1 = np.array([K1[q]*(self.pdf.xfxQ2(flavours[q], x, Q2) + self.pdf.xfxQ2(anti_flavours[q], x, Q2)
-                               + self.pdf.alphasQ2(Q2)*(self.convolution(self.Cqiz, flavours[q], x, Q2) + 
-                                                       self.convolution(self.Cqiz, anti_flavours[q], x, Q2) + 
-                                                       self.convolution(self.Cg, 21, x, Q2))
-                               ) for q in quarks]).sum()
-        F2 = np.array([K2[q]*(self.pdf.xfxQ2(flavours[q], x, Q2) + self.pdf.xfxQ2(anti_flavours[q], x, Q2)) for q in quarks]).sum()
-        xF3 = np.array([K2[q]*(self.pdf.xfxQ2(flavours[q], x, Q2) - self.pdf.xfxQ2(anti_flavours[q], x, Q2)) for q in quarks]).sum()
-        return xF1, F2, xF3
-
-    def struc_LO(self, x, Q2):
-        quarks = ['up', 'down', 'strange', 'charm']
-        anti_quarks = ['anti-up', 'anti-down', 'anti-strange', 'anti-charm']
-        flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
-        anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
-        #anti_flavours = {'anti-up':-2, 'anti-down':-1, 'anti-strange':-3, 'anti-charm':-4}
-        #f1 = {'up':0.0, 'down':0.0, 'strange':0.0, 'charm':0.0,}
-        #f1a = {'anti-up':0.0, 'anti-down':0.0, 'anti-strange':0.0, 'anti-charm':0.0}
-        #flavours = {'up':2, 'anti-up':-2, 'down':1, 'anti-down':-1, 'strange':3, 'anti-strange':-3, 'charm':4, 'anti-charm':-4}
-        #f1 = {'up':0.0, 'anti-up':0.0, 'down':0.0, 'anti-down':0.0, 'strange':0.0, 'anti-strange':0.0, 'charm':0.0, 'anti-charm':0.0}
-        #f1 = self.f_LO(1, x, Q2)
-        #f1_g = 0
-        #g = self.pdf(21, x, Q2)
-        K1 = {'up':1/4, 'down':1/4, 'strange':1/4, 'charm':1/4,}
-        K2 = {'up':1/2, 'down':1/2, 'strange':1/2, 'charm':1/2,}
-
-        #F1 = [self.convolution(flavours[qi], f1[qi]) for qi in quarks] + [self.convolution(flavours[aqi], f1[aqi]) for aqi in anti_quarks] + self.convolution(g, f1_g)
-        # quick 
-        xF1 = np.array([K1[q]*(self.pdf.xfxQ2(flavours[q], x, Q2) + self.pdf.xfxQ2(anti_flavours[q], x, Q2)) for q in quarks]).sum()
-        F2 = np.array([K2[q]*(self.pdf.xfxQ2(flavours[q], x, Q2) + self.pdf.xfxQ2(anti_flavours[q], x, Q2)) for q in quarks]).sum()
-        xF3 = np.array([K1[q]*(self.pdf.xfxQ2(flavours[q], x, Q2) - self.pdf.xfxQ2(anti_flavours[q], x, Q2)) for q in quarks]).sum()
-        # slow with conv.
-        xF1 = np.array([K1[q]*(self.convolution(self.Cq_lo, flavours[q], x, Q2) + self.convolution(self.Cq_lo, flavours[q], x, Q2)) for q in quarks]).sum()
-        F2 = np.array([K2[q]*(self.convolution(self.Cq_lo, flavours[q], x, Q2) + self.convolution(self.Cq_lo, flavours[q], x, Q2)) for q in quarks]).sum()
-        xF3 = np.array([K2[q]*(self.convolution(self.Cq_lo, flavours[q], x, Q2) - self.convolution(self.Cq_lo, flavours[q], x, Q2)) for q in quarks]).sum()
-        return xF1, F2, xF3
-
     def ddiff_lnx_lnQ2(self, lnx, Q2):
         self.calc_count += 1
         x = np.max([np.exp(lnx), self.xmin])
@@ -248,10 +170,10 @@ for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
 #for name, pdf in [('log40', pdf_40)]:
 # 0, 19 all 
 # 7, 8 for 1e6
-    for i in range(0, 19): # 19 to end
+    for i in range(0, 1): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
-        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True)
+        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=False)
         print('physical', cs.physical)
         if cs.physical:
             sigma, err = cs.calc()
@@ -265,7 +187,7 @@ for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
         print(f'Time of calc: {(dt_end - dt_start)}')
         print()
 
-        if True:
+        if False:
             df.at[i, name] = sigma
             df.at[i, name + "_err"] = err
             df.to_csv('cs_3.csv', index=False)
