@@ -1,4 +1,4 @@
-
+import NLO_functions
 import lhapdf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,6 +6,8 @@ from scipy import integrate
 import pandas as pd
 import multiprocessing
 import datetime
+from tqdm import tqdm
+import warnings
 
 
 class cs_neutrino_nucleon:
@@ -45,11 +47,14 @@ class cs_neutrino_nucleon:
 
         self.calc_count = 0
 
-
-
     def calc(self):
         if self.physical:
-            cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max)
+            self.pbar = tqdm(total=2e6)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max)
+            self.pbar.close()
+            print(f'Took {self.calc_count} cals to ddif_sigma')
             return cs, err
         else:
             print('E_nu to high; s > q2max')
@@ -84,7 +89,6 @@ class cs_neutrino_nucleon:
         Q2 = np.exp(lnQ2)
         #Q2 = lnQ2
         #print(lnxmin, lnxmax)
-        #pool = multiprocessing.Pool(processes=4)
         ddif, err = integrate.quad(self.ddiff_lnx_lnQ2, lnxmin, lnxmax, args=(Q2,))
         return Q2 * ddif
         return ddif
@@ -126,7 +130,6 @@ class cs_neutrino_nucleon:
             return 1.0
         else:
             return 0.0
-
 
     def Cqiz(self, z):
         '''Coefficient function for the quarks'''
@@ -205,11 +208,7 @@ class cs_neutrino_nucleon:
         #x = lnx
         #x = 0.1
         #Q2 = 100
-        if self.calc_count % 1000 == 0:
-        #if self.calc_count % 100000 == 0:
-           # print(f'{self.calc_count=}')
-            pass
-        #    quit()
+        self.pbar.update(1)
 
         y = Q2 / x / self.s
         omy2 = np.power((1-y), 2)
@@ -220,7 +219,8 @@ class cs_neutrino_nucleon:
         if self.NLO:
             fact = self.convert * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
             #xF1, F2, xF3 = self.struc_NLO(x, Q2)
-            xF1, F2, xF3 = self.struc_LO(x, Q2)
+
+            xF1, F2, xF3 = NLO_functions.struc_NLO_m(x, Q2) #self.struc_LO(x, Q2)
             #print(f'diff xF1 NLO: {xF1}, xF1 lo: {xF1_lo}, diff: {np.abs(xF1 - xF1_lo)}')
             return fact * (F2*(1-y) + xF1*y*y + xF3*y*(1 - y/2))
             # NLO from paper
@@ -240,7 +240,7 @@ pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf31_LO_x2'
+name = 'pdf31_NLO_x2'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
@@ -251,7 +251,7 @@ for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
     for i in range(0, 19): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
-        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=False)
+        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True)
         print('physical', cs.physical)
         if cs.physical:
             sigma, err = cs.calc()

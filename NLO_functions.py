@@ -5,6 +5,9 @@ import path
 from tqdm import tqdm
 from scipy import integrate
 import pickle
+import multiprocessing
+import functools
+from datetime import datetime
 
 pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 
@@ -123,6 +126,7 @@ def C(x, Q2, flavour, i):
     return r
 
 def F1_nlo(x, Q2):
+    #x, Q2 = args
     K1 = 1/4
     quarks = ['up', 'down', 'strange', 'charm']
     flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
@@ -132,6 +136,7 @@ def F1_nlo(x, Q2):
     return F1
 
 def F2_nlo(x, Q2):
+    #x, Q2 = args
     K2 = 1/2
     quarks = ['up', 'down', 'strange', 'charm']
     flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
@@ -141,15 +146,16 @@ def F2_nlo(x, Q2):
     return F2
 
 def F3_nlo(x, Q2):
+    #x, Q2 = args
     K2 = 1/2
     quarks = ['up', 'down', 'strange', 'charm']
     flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
     anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
-    F3 = np.sum(K2*x*np.array([q_s(x, Q2, flavours[q]) -  q_s(x, Q2, anti_flavours[q]) 
+    F3 = np.sum(K2*np.array([q_s(x, Q2, flavours[q]) -  q_s(x, Q2, anti_flavours[q]) 
                           + pdf.alphasQ2(Q2)*(C(x, Q2, flavours[q], 2) - C(x, Q2, anti_flavours[q], 2)) for q in quarks]))
     return F3
 
-def F1_lo(x, Q2):
+def F_lo(x, Q2):
     K1 = 1/2
     quarks = ['up', 'down', 'strange', 'charm']
     flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
@@ -157,9 +163,34 @@ def F1_lo(x, Q2):
     F1 = np.sum(K1*np.array([pdf.xfxQ2(flavours[q], x, Q2) - pdf.xfxQ2(anti_flavours[q], x, Q2) for q in quarks]))
     return F1
 
+def smap(f, *args):
+    return f(*args)
 
-#r = MC(lambda x: np.sin(x), 0, 1)
-#r = MC_div(f, x, 1)
-#print(r)
-test(F3_nlo, 3, 1)
-#print(pdf.xfxQ2(1, 1, 100))
+def struc_NLO(x, Q2):
+    return F1_nlo(x, Q2), F2_nlo(x, Q2), F3_nlo(x, Q2)
+
+def struc_NLO_m(x, Q2):
+    pool = multiprocessing.Pool(processes=4)
+#    f1 = Process(target=F1_nlo, args=(x, Q2))
+    #F1_nlo(x, Q2), F2_nlo(x, Q2), F3_nlo(x, Q2)
+    #res = pool.map(smap, ([F1_nlo, F2_nlo, F3_nlo], [x, x, x], [Q2, Q2, Q2]))
+    f1 =functools.partial(F1_nlo, x, Q2)
+    f2 =functools.partial(F2_nlo, x, Q2)
+    f3 =functools.partial(F3_nlo, x, Q2)
+    res = pool.map(smap, [f1, f2, f3])
+    return res
+
+if __name__ == '__main__':
+    ts = datetime.now()
+    a = struc_NLO_m(0.023, 1e6)
+    te = datetime.now()
+    print(f'{a} took {te - ts} multithread')
+    ts = datetime.now()
+    b = struc_NLO(0.023, 1e6)
+    te = datetime.now()
+    print(f'{a} took {te - ts} single thread')
+    #r = MC(lambda x: np.sin(x), 0, 1)
+    #r = MC_div(f, x, 1)
+    #print(r)
+    #test(F3_nlo, 3, 1)
+    #print(pdf.xfxQ2(1, 1, 100))
