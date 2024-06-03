@@ -7,6 +7,8 @@ from datetime import datetime as dt
 from tqdm import tqdm
 import path
 
+pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
+
 def delta_old(x):
     epsilon = 0.001
     if x <= epsilon and x >= -epsilon:
@@ -76,7 +78,6 @@ def Cg_conv_g(x, Q2):
     #print(f'{int=} \n{int2=}')
     return int #+ int2
 
-pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 
 def gluon():
     #conv = convolution(C1q, 1, 0.1, 1000)
@@ -112,8 +113,8 @@ def gluon():
 def Cq_conv_q(x, Q2):
     Caa = lambda z: (1 + x*x/z/z) * np.log(1 - x/z)/(z - x) #* (pdf.xfxQ2(1, x, Q2)/x)
     Cb = lambda z: -(1 + x*x/z/z)/(z - x) * np.log(x/z) #* (pdf.xfxQ2(1, x, Q2)/x) # added Cd
-    Cd = lambda z: 3 + 2*z
-    Ce = - pdf.xfxQ2(1, x, Q2)/x * (9/2 + np.pi**2 /3)
+    Cd = lambda z: 3 + 2*z # not 2*x/z ??
+    Ce = - pdf.xfxQ2(1, x, Q2)/x * (9/2 + np.pi**2/3)
     Cca = lambda z: - 3/2 * (1/(z-x))
     C = lambda z: (Caa(z) + Cb(z) + Cca(z) + Cd(z)) * (pdf.xfxQ2(1, x, Q2)/x)
     int_y, _ = integrate.quad(lambda y: np.log(1 - y)/(1 - y), 0, 1)
