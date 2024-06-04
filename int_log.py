@@ -4,10 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import integrate
 import pandas as pd
-import multiprocessing
+#import multiprocessing
 import datetime
 from tqdm import tqdm
 import warnings
+import concurrent.futures as cf
 
 
 class cs_neutrino_nucleon:
@@ -46,14 +47,30 @@ class cs_neutrino_nucleon:
         #print(f'{self.lnQ2min=}, {self.lnQ2max}')
 
         self.calc_count = 0
+        self.maxworkers = 5
 
     def calc(self):
         if self.physical:
-            self.pbar = tqdm(total=2e6)
+            self.pbar = tqdm(total=3.8e6)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
+                list_Q2 = np.linspace(self.lnQ2min, self.lnQ2max, self.maxworkers + 1)
+                splits_Q2 = []
+                for i in range(self.maxworkers):
+                    splits_Q2.append((list_Q2[i], list_Q2[i+1]))
 
-                cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max)
+                print(splits_Q2)
+                cs = 0
+                err = 0
+                with cf.ThreadPoolExecutor(max_workers=self.maxworkers) as executor:
+                    future_split = {executor.submit(integrate.quad, self.diff_lnQ2, split_Q2[0], split_Q2[1]): split_Q2 for split_Q2 in splits_Q2}
+                    for future in cf.as_completed(future_split):
+                        result = future.result()
+                        cs += result[0]
+                        err += result[1]
+
+
+                #cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max)
             self.pbar.close()
             return cs, err
         else:
@@ -173,7 +190,7 @@ for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
     for i in range(0, 1): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
-        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=False)
+        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True)
         print('physical', cs.physical)
         if cs.physical:
             sigma, err = cs.calc()
