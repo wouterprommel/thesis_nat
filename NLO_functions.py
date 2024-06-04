@@ -67,7 +67,7 @@ def Cg(x, Q2, i):
     else:
         f = lambda z: (6*(x/z/z * (1 - x)) + (1/z - 2*x/z/z + x*x/z/z/z) *np.log((z- x)/x) )* g(z, Q2)
 
-    int, err = integrate.quad(f, x, 1)
+    int, err = integrate.quad(f, x, 1, epsabs=0.1)
     #f2 = lambda z: (1/z - 2*x/z/z + x*x/z/z/z) *np.log((z- x)/x)* g(z, Q2)
     #int2, err = integrate.quad(f2, x, 1)
     #print(f'{int=} \n{int2=}')
@@ -114,7 +114,7 @@ def Cd(x, Q2, flavour, i):
         f = lambda z: (3/z) * q_s(z, Q2, flavour) 
     else:
         f = lambda z: (3/z + 2*x/z/z) * q_s(z, Q2, flavour) 
-    r, err = integrate.quad(f, x, 1)
+    r, err = integrate.quad(f, x, 1, epsabs=0.1)
     #r = MC(f, x, 1)
     return r
 
@@ -123,19 +123,19 @@ def Cd_sum(x, Q2, i):
         f = lambda z: (3/z) * q_s_sum(z, Q2) 
     else:
         f = lambda z: (3/z + 2*x/z/z) * q_s_sum(z, Q2) 
-    r, err = integrate.quad(f, x, 1)
+    r, err = integrate.quad(f, x, 1, epsabs=0.1)
     #r = MC(f, x, 1)
     return r
 
 def Cb(x, Q2, flavour):
     f = lambda z: (1 + x*x/z/z)/(z - x) * np.log(x/z) * q_s(z, Q2, flavour)
-    r, err = integrate.quad(f, 1, x)
+    r, err = integrate.quad(f, 1, x, epsabs=0.1)
     #r = MC_log(f, x, 1)
     return r
 
 def Cb_sum(x, Q2):
     f = lambda z: (1 + x*x/z/z)/(z - x) * np.log(x/z) * q_s_sum(z, Q2)
-    r, err = integrate.quad(f, 1, x)
+    r, err = integrate.quad(f, 1, x, epsabs=0.1)
     #r = MC_log(f, x, 1)
     return r
 
@@ -153,12 +153,12 @@ def Ca_sum(x, Q2):
 
 def C3(x, Q2, flavour):
     f = lambda z: -(1/z + x/z/z) * q_s(z, Q2, flavour)
-    r, err = integrate.quad(f, x, 1)
+    r, err = integrate.quad(f, x, 1, epsabs=0.1)
     return r
 
 def C3_sum(x, Q2):
     f = lambda z: -(1/z + x/z/z) * q_s_sum(z, Q2)
-    r, err = integrate.quad(f, x, 1)
+    r, err = integrate.quad(f, x, 1, epsabs=0.1)
     return r
 
 def C(x, Q2, flavour, i):
@@ -193,6 +193,7 @@ def F1_nlo(x, Q2):
     anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
     F1 = np.sum(K1*np.array([q_s(x, Q2, flavours[q]) +  q_s(x, Q2, anti_flavours[q]) 
                           + pdf.alphasQ2(Q2)*(C(x, Q2, flavours[q], 1) + C(x, Q2, anti_flavours[q], 1) + 2*Cg(x, Q2, 1)) for q in quarks]))
+    assert np.isfinite(F1), f"F1 not finite: {F1}"
     return F1
 
 def F2_nlo(x, Q2):
@@ -203,6 +204,7 @@ def F2_nlo(x, Q2):
     anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
     F2 = np.sum(K2*x*np.array([q_s(x, Q2, flavours[q]) +  q_s(x, Q2, anti_flavours[q]) 
                           + pdf.alphasQ2(Q2)*(C(x, Q2, flavours[q], 2) + C(x, Q2, anti_flavours[q], 2) + 2*Cg(x, Q2, 2)) for q in quarks]))
+    assert np.isfinite(F2), f"F2 not finite: {F2}"
     return F2
 
 def Fi_nlo_sum(x, Q2, i):
@@ -233,6 +235,7 @@ def F3_nlo(x, Q2):
     anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
     F3 = np.sum(K2*np.array([q_s(x, Q2, flavours[q]) -  q_s(x, Q2, anti_flavours[q]) 
                           + pdf.alphasQ2(Q2)*(C(x, Q2, flavours[q], 3) - C(x, Q2, anti_flavours[q], 3)) for q in quarks]))
+    assert np.isfinite(F3), f"F3 not finite: {F3}, x: {x}, Q2: {Q2}"
     return F3
 
 def F_lo(x, Q2):
@@ -253,6 +256,7 @@ def struc_NLO_sum(x, Q2):
     return [Fi_nlo_sum(x, Q2, i) for i in [1, 2, 3]] 
 
 def struc_NLO_m(x, Q2):
+    assert x < 1.0, 'x cant be exactly 1.0'
     pool = multiprocessing.Pool(processes=3)
 #    f1 = Process(target=F1_nlo, args=(x, Q2))
     #F1_nlo(x, Q2), F2_nlo(x, Q2), F3_nlo(x, Q2)
@@ -278,12 +282,13 @@ if __name__ == '__main__':
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         ts = datetime.now()
-        a = np.sum([struc_NLO_m_sum(x, 1e6) for x in tqdm(np.linspace(0.001, 1, 40))])
+        #a = np.sum([struc_NLO_m_sum(x, 1e6) for x in tqdm(np.linspace(0.001, 1, 40))])
+        a = 0
         #test(C, 2, 1)
         te = datetime.now()
         print(f'{a} took {te - ts} sum in int')
         ts = datetime.now()
-        b = np.sum([struc_NLO_m(x, 1e6) for x in tqdm(np.linspace(0.001, 1, 40))])
+        b = np.sum([struc_NLO_m(x, 1e8) for x in tqdm(np.linspace(0.06, 0.9999, 40))])
         te = datetime.now()
         print(f'{a} took {te - ts} single thread')
         print(f'{a=} and {b=}, difference is {a-b=}')

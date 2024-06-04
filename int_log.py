@@ -13,7 +13,7 @@ import concurrent.futures as cf
 
 class cs_neutrino_nucleon:
 
-    def __init__(self, E_nu, pdf, anti=False, target='isoscalar', NLO=False):
+    def __init__(self, E_nu, pdf, anti=False, target='isoscalar', NLO=False, multithread=True):
         self.Mn = 0.938
         self.pdf = pdf
 
@@ -47,30 +47,34 @@ class cs_neutrino_nucleon:
         #print(f'{self.lnQ2min=}, {self.lnQ2max}')
 
         self.calc_count = 0
-        self.maxworkers = 5
+        self.maxworkers = 8
+        self.multithread = multithread
 
     def calc(self):
         if self.physical:
-            self.pbar = tqdm(total=3.8e6)
+            self.pbar = tqdm(total=1e4)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                list_Q2 = np.linspace(self.lnQ2min, self.lnQ2max, self.maxworkers + 1)
-                splits_Q2 = []
-                for i in range(self.maxworkers):
-                    splits_Q2.append((list_Q2[i], list_Q2[i+1]))
+                if self.multithread:
+                    list_Q2 = np.linspace(self.lnQ2min, self.lnQ2max, self.maxworkers + 1)
+                    splits_Q2 = []
+                    for i in range(self.maxworkers):
+                        splits_Q2.append((list_Q2[i], list_Q2[i+1]))
 
-                print(splits_Q2)
-                cs = 0
-                err = 0
-                with cf.ThreadPoolExecutor(max_workers=self.maxworkers) as executor:
-                    future_split = {executor.submit(integrate.quad, self.diff_lnQ2, split_Q2[0], split_Q2[1]): split_Q2 for split_Q2 in splits_Q2}
-                    for future in cf.as_completed(future_split):
-                        result = future.result()
-                        cs += result[0]
-                        err += result[1]
+                    print(splits_Q2)
+                    cs = 0
+                    err = 0
+                    with cf.ThreadPoolExecutor(max_workers=self.maxworkers) as executor:
+                        future_split = {executor.submit(integrate.quad, self.diff_lnQ2, split_Q2[0], split_Q2[1], epsabs=1, epsrel=1): split_Q2 for split_Q2 in splits_Q2}
+                        for future in cf.as_completed(future_split):
+                            result = future.result()
+                            cs += result[0]
+                            err += result[1]
+                            print(f'cumulative cs: {cs}, cumulative err: {err}')
 
 
-                #cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max)
+                else:
+                    cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max, epsabs=0.1)
             self.pbar.close()
             return cs, err
         else:
@@ -106,7 +110,7 @@ class cs_neutrino_nucleon:
         Q2 = np.exp(lnQ2)
         #Q2 = lnQ2
         #print(lnxmin, lnxmax)
-        ddif, err = integrate.quad(self.ddiff_lnx_lnQ2, lnxmin, lnxmax, args=(Q2,))
+        ddif, err = integrate.quad(self.ddiff_lnx_lnQ2, lnxmin, lnxmax, args=(Q2,), epsabs=1, epsrel=1)
         return Q2 * ddif
         return ddif
     
@@ -179,7 +183,7 @@ pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf31_NLO_x2'
+name = 'pdf31_LO_acc_0.1'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
@@ -190,7 +194,7 @@ for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
     for i in range(0, 1): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
-        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True)
+        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True, multithread=True)
         print('physical', cs.physical)
         if cs.physical:
             sigma, err = cs.calc()
