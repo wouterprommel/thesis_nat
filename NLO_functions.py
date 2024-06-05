@@ -14,18 +14,28 @@ pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 
 Flavours = [1, 2, 3, 4, -1, -2, -3, -4]
 
+PRECISION = 1
+
 def test(solver, xmin, flavour):
-    X = np.logspace(-xmin, 1, 1000, endpoint=False)
+    X = np.logspace(xmin, 1, 1000, endpoint=False)
     X = X[X < 1.0]
     Q2 = 1e6
     R = []
     G = []
     for x in tqdm(X):
         assert x < 1.0
-        G.append(C_sum(x, Q2, 2) * x)
+        G.append(solver(x, Q2, 1, 2))
+        R.append(pdf.xfxQ2(1, x, Q2))
         #R.append(np.sum([solver(x, Q2, flavour, 2) * x for flavour in Flavours]))
     #plt.plot(X, R, label=f'F2 NLO')
-    plt.plot(X, G, label='F2 NLO sum')
+    G = np.array(G)
+    for i in range(len(G[0])):
+        plt.plot(X, G[:, i], label=f'C part {i} NLO')
+
+    r = pdf.alphasQ2(Q2) * np.sum(G, axis=1)
+
+    plt.plot(X, R + r, label=f'C NLO')
+    plt.plot(X, R, label=f'C LO')
     plt.xscale('log')
     plt.xlabel('x')
     plt.legend()
@@ -35,7 +45,7 @@ def test(solver, xmin, flavour):
         pickle.dump([X, R, G], file)
         file.close()
 
-    plt.savefig(name + ".pdf", format="pdf", bbox_inches="tight")
+    #plt.savefig(name + ".pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
 def MC(func, a, b):
@@ -67,7 +77,7 @@ def Cg(x, Q2, i):
     else:
         f = lambda z: (6*(x/z/z * (1 - x)) + (1/z - 2*x/z/z + x*x/z/z/z) *np.log((z- x)/x) )* g(z, Q2)
 
-    int, err = integrate.quad(f, x, 1, epsabs=0.1)
+    int, err = integrate.quad(f, x, 1, epsabs=PRECISION)
     #f2 = lambda z: (1/z - 2*x/z/z + x*x/z/z/z) *np.log((z- x)/x)* g(z, Q2)
     #int2, err = integrate.quad(f2, x, 1)
     #print(f'{int=} \n{int2=}')
@@ -97,6 +107,13 @@ def Cc(x, Q2, flavour):
     r = MC_div(f, x, 1)
     return r
 
+def Ca(x, Q2, flavour):
+    #f = lambda u: (1/u + u)*q_2(u, x, Q2)*np.log(1 - u) / (1 - u)
+    f = lambda z: 1/z * (1 + x*x/z/z) * np.log(1 - x/z) * q_s(z, Q2, flavour)
+    #r = MC_div(f, x, 1)
+    r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
+    return r
+
 def Cc_sum(x, Q2):
     #x = 0.129
     f = lambda u: -3/2/u * q_2_sum(u, x, Q2)
@@ -104,7 +121,7 @@ def Cc_sum(x, Q2):
     return r
 
 def Ce(x, Q2, flavour):
-    return - pdf.xfxQ2(flavour, x, Q2)/x * (9/2 + np.pi**2/3)
+    return -pdf.xfxQ2(flavour, x, Q2)/x * (9/2 + np.pi**2/3)
 
 def Ce_sum(x, Q2):
     return - q_s_sum(x, Q2) * (9/2 + np.pi**2/3)
@@ -114,7 +131,7 @@ def Cd(x, Q2, flavour, i):
         f = lambda z: (3/z) * q_s(z, Q2, flavour) 
     else:
         f = lambda z: (3/z + 2*x/z/z) * q_s(z, Q2, flavour) 
-    r, err = integrate.quad(f, x, 1, epsabs=0.1)
+    r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
     #r = MC(f, x, 1)
     return r
 
@@ -123,27 +140,22 @@ def Cd_sum(x, Q2, i):
         f = lambda z: (3/z) * q_s_sum(z, Q2) 
     else:
         f = lambda z: (3/z + 2*x/z/z) * q_s_sum(z, Q2) 
-    r, err = integrate.quad(f, x, 1, epsabs=0.1)
+    r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
     #r = MC(f, x, 1)
     return r
 
 def Cb(x, Q2, flavour):
     f = lambda z: (1 + x*x/z/z)/(z - x) * np.log(x/z) * q_s(z, Q2, flavour)
-    r, err = integrate.quad(f, 1, x, epsabs=0.1)
+    r, err = integrate.quad(f, 1, x, epsabs=PRECISION)
     #r = MC_log(f, x, 1)
     return r
 
 def Cb_sum(x, Q2):
     f = lambda z: (1 + x*x/z/z)/(z - x) * np.log(x/z) * q_s_sum(z, Q2)
-    r, err = integrate.quad(f, 1, x, epsabs=0.1)
+    r, err = integrate.quad(f, 1, x, epsabs=PRECISION)
     #r = MC_log(f, x, 1)
     return r
 
-def Ca(x, Q2, flavour):
-    #f = lambda u: (1/u + u)*q_2(u, x, Q2)*np.log(1 - u) / (1 - u)
-    f = lambda z: 1/z * (1 + x*x/z/z) * np.log(1 - x/z) * q(z, Q2, flavour)
-    r = MC_div(f, x, 1)
-    return r
 
 def Ca_sum(x, Q2):
     #f = lambda u: (1/u + u)*q_2(u, x, Q2)*np.log(1 - u) / (1 - u)
@@ -153,25 +165,28 @@ def Ca_sum(x, Q2):
 
 def C3(x, Q2, flavour):
     f = lambda z: -(1/z + x/z/z) * q_s(z, Q2, flavour)
-    r, err = integrate.quad(f, x, 1, epsabs=0.1)
+    r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
     return r
 
 def C3_sum(x, Q2):
     f = lambda z: -(1/z + x/z/z) * q_s_sum(z, Q2)
-    r, err = integrate.quad(f, x, 1, epsabs=0.1)
+    r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
     return r
 
 def C(x, Q2, flavour, i):
     #Cbd = lambda z: ((1 + x*x/z/z)/(z - x) * np.log(x/z) + (3/z + 2*x/z/z)) * q_s(z, Q2) 
     #r, err = integrate.quad(Cbd, 1, x)
-    r = Cb(x, Q2, flavour) + Cd(x, Q2, flavour, i)
+    r = []
+    r.append(Ca(x, Q2, flavour))
+    r.append(Cb(x, Q2, flavour))
+    r.append(Cc(x, Q2, flavour))
+    r.append(Cd(x, Q2, flavour, i))
     # Ce
     #r += pdf.xfxQ2(flavour, x, Q2)/x * (9/2 + np.pi**2/3)
-    r += Ce(x, Q2, flavour)
-    r += Cc(x, Q2, flavour) + Ca(x, Q2, flavour)
+    r.append(Ce(x, Q2, flavour))
     if i == 3:
-        r += C3(x, Q2, flavour)
-    return r
+        r.append(C3(x, Q2, flavour))
+    return np.sum(r)
 
 def C_sum(x, Q2, i):
     #Cbd = lambda z: ((1 + x*x/z/z)/(z - x) * np.log(x/z) + (3/z + 2*x/z/z)) * q_s(z, Q2) 
@@ -183,7 +198,7 @@ def C_sum(x, Q2, i):
     r += Cc_sum(x, Q2) + Ca_sum(x, Q2)
     if i == 3:
         r += C3_sum(x, Q2)
-    return r
+    return r 
 
 def F1_nlo(x, Q2):
     #x, Q2 = args
@@ -191,7 +206,7 @@ def F1_nlo(x, Q2):
     quarks = ['up', 'down', 'strange', 'charm']
     flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
     anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
-    F1 = np.sum(K1*np.array([q_s(x, Q2, flavours[q]) +  q_s(x, Q2, anti_flavours[q]) 
+    F1 = np.sum(K1*x*np.array([q_s(x, Q2, flavours[q]) +  q_s(x, Q2, anti_flavours[q]) 
                           + pdf.alphasQ2(Q2)*(C(x, Q2, flavours[q], 1) + C(x, Q2, anti_flavours[q], 1) + 2*Cg(x, Q2, 1)) for q in quarks]))
     assert np.isfinite(F1), f"F1 not finite: {F1}"
     return F1
@@ -238,16 +253,23 @@ def F3_nlo(x, Q2):
     assert np.isfinite(F3), f"F3 not finite: {F3}, x: {x}, Q2: {Q2}"
     return F3
 
-def F_lo(x, Q2):
-    K1 = 1/2
+def Fi_lo(x, Q2, i):
     quarks = ['up', 'down', 'strange', 'charm']
     flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
     anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
-    F1 = np.sum(K1*np.array([pdf.xfxQ2(flavours[q], x, Q2) - pdf.xfxQ2(anti_flavours[q], x, Q2) for q in quarks]))
-    return F1
+    if i == 3:
+        F = np.sum((1/2)*np.array([pdf.xfxQ2(flavours[q], x, Q2) - pdf.xfxQ2(anti_flavours[q], x, Q2) for q in quarks])) / x
+    elif i == 2:
+        F = np.sum((1/2)*np.array([pdf.xfxQ2(flavours[q], x, Q2) + pdf.xfxQ2(anti_flavours[q], x, Q2) for q in quarks]))
+    elif i == 1:
+        F = np.sum((1/4)*np.array([pdf.xfxQ2(flavours[q], x, Q2) + pdf.xfxQ2(anti_flavours[q], x, Q2) for q in quarks])) / x
+    return F
 
 def smap(f, *args):
     return f(*args)
+
+def struc_LO(x, Q2):
+    return [Fi_lo(x, Q2, i) for i in [1, 2, 3]] 
 
 def struc_NLO(x, Q2):
     return F1_nlo(x, Q2), F2_nlo(x, Q2), F3_nlo(x, Q2)
@@ -279,19 +301,37 @@ def struc_NLO_m_sum(x, Q2):
     return res
 
 if __name__ == '__main__':
+    
+    #test(C,-2, 1)
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
+        Q2 = 1e8
+        s = []
+        s_lo = []
         ts = datetime.now()
-        #a = np.sum([struc_NLO_m_sum(x, 1e6) for x in tqdm(np.linspace(0.001, 1, 40))])
-        a = 0
-        #test(C, 2, 1)
+        X = np.logspace(-2, 1, 50, endpoint=False)
+        X = X[X < 1.0]
+        for x in tqdm(X):
+            s.append(struc_NLO_m(x, Q2) * np.array([x, 1, x]))
+            s_lo.append(struc_LO(x, Q2) * np.array([x, 1, x]))
+        s = np.array(s)
+        s_lo = np.array(s_lo)
         te = datetime.now()
-        print(f'{a} took {te - ts} sum in int')
-        ts = datetime.now()
-        b = np.sum([struc_NLO_m(x, 1e8) for x in tqdm(np.linspace(0.06, 0.9999, 40))])
-        te = datetime.now()
-        print(f'{a} took {te - ts} single thread')
-        print(f'{a=} and {b=}, difference is {a-b=}')
+    fig, axis = plt.subplots(3, )
+    axis[0].plot(X, s[:, 0], label='F1 NLO')
+    axis[1].plot(X, s[:, 1], label='F2 NLO')
+    axis[2].plot(X, s[:, 2], label='F3 NLO')
+    axis[0].plot(X, s_lo[:, 0], label='F1 LO')
+    axis[1].plot(X, s_lo[:, 1], label='F2 LO')
+    axis[2].plot(X, s_lo[:, 2], label='F3 LO')
+    axis[0].set_xscale('log')
+    axis[1].set_xscale('log')
+    axis[2].set_xscale('log')
+    axis[0].legend()
+    axis[1].legend()
+    axis[2].legend()
+    plt.show()
     #r = MC(lambda x: np.sin(x), 0, 1)
     #r = MC_div(f, x, 1)
     #print(r)
