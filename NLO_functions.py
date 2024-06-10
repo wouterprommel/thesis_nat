@@ -11,6 +11,7 @@ import functools
 from datetime import datetime
 
 plt.rcParams['text.usetex'] = True
+plt.style.use('seaborn-v0_8-colorblind')
 
 pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 
@@ -73,20 +74,6 @@ def g(x, Q2):
     g = pdf.xfxQ2(21, x, Q2)/x
     return g
 
-def Cg_prev(x, Q2, i):
-    if i == 1:
-        f = lambda z: (10*(x/z/z * (1 - x)) + (1/z - 2*x/z/z + x*x/z/z/z) *np.log((z- x)/x) )* g(z, Q2)
-    elif i == 2:
-        f = lambda z: (6*(x/z/z * (1 - x)) + (1/z - 2*x/z/z + x*x/z/z/z) *np.log((z- x)/x) )* g(z, Q2)
-    elif i == 3:
-        return 0
-
-    int, err = integrate.quad(f, x, 1, epsabs=PRECISION)
-    #f2 = lambda z: (1/z - 2*x/z/z + x*x/z/z/z) *np.log((z- x)/x)* g(z, Q2)
-    #int2, err = integrate.quad(f2, x, 1)
-    #print(f'{int=} \n{int2=}')
-    return int #+ int2
-
 def Cg(x, Q2, i):
     if i == 1:
         f = lambda z: (10*(x/z/z * (1 - x/z)) + (1/z - 2*x/z/z + 2*x*x/z/z/z) *np.log((z- x)/x) )* g(z, Q2)
@@ -101,32 +88,19 @@ def Cg(x, Q2, i):
 def q_2(u, x, Q2, flavour):
     return np.array([pdf.xfxQ2(flavour, x/i, Q2)*i/x for i in u])
 
-def q_2_sum(u, x, Q2):
-    return np.array([np.sum([pdf.xfxQ2(flavour, x/i, Q2) for flavour in Flavours])*i/x for i in u])
 
 def q(z, Q2, flavour):
     return np.array([pdf.xfxQ2(flavour, i, Q2)/i for i in z])
 
-def q_sum(z, Q2):
-    return np.array([np.sum([pdf.xfxQ2(flavour, i, Q2) for flavour in Flavours])/i for i in z])
 
 def q_s(z, Q2, flavour):
     return pdf.xfxQ2(flavour, z, Q2)/z
 
-def q_s_sum(z, Q2):
-    return np.sum([pdf.xfxQ2(flavour, z, Q2) for flavour in Flavours])/z
 
 def Cc(x, Q2, flavour):
     #x = 0.129
     f = lambda u: -3/2/u * q_2(u, x, Q2, flavour)
     r = MC_div(f, x, 1)
-    return r
-
-def Ca_prev(x, Q2, flavour):
-    #f = lambda u: (1/u + u)*q_2(u, x, Q2)*np.log(1 - u) / (1 - u)
-    f = lambda z: 1/(1 - x/z) * (1 + x*x/z/z) * np.log(1 - x/z) * q_s(z, Q2, flavour)
-    #r = MC_div(f, x, 1)
-    r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
     return r
 
 def Ca(x, Q2, flavour):
@@ -136,17 +110,9 @@ def Ca(x, Q2, flavour):
     r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
     return r
 
-def Cc_sum(x, Q2):
-    #x = 0.129
-    f = lambda u: -3/2/u * q_2_sum(u, x, Q2)
-    r = MC_div(f, x, 1)
-    return r
-
 def Ce(x, Q2, flavour):
     return -pdf.xfxQ2(flavour, x, Q2)/x * (9/2 + np.pi**2/3)
 
-def Ce_sum(x, Q2):
-    return - q_s_sum(x, Q2) * (9/2 + np.pi**2/3)
 
 def Cd(x, Q2, flavour, i):
     if i == 1:
@@ -157,41 +123,14 @@ def Cd(x, Q2, flavour, i):
     #r = MC(f, x, 1)
     return r
 
-def Cd_sum(x, Q2, i):
-    if i == 1:
-        f = lambda z: (3/z) * q_s_sum(z, Q2) 
-    else:
-        f = lambda z: (3/z + 2*x/z/z) * q_s_sum(z, Q2) 
-    r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
-    #r = MC(f, x, 1)
-    return r
-
 def Cb(x, Q2, flavour):
     f = lambda z: (1 + x*x/z/z)/(z - x) * np.log(x/z) * q_s(z, Q2, flavour)
     r, err = integrate.quad(f, 1, x, epsabs=PRECISION)
     #r = MC_log(f, x, 1)
     return r
 
-def Cb_sum(x, Q2):
-    f = lambda z: (1 + x*x/z/z)/(z - x) * np.log(x/z) * q_s_sum(z, Q2)
-    r, err = integrate.quad(f, 1, x, epsabs=PRECISION)
-    #r = MC_log(f, x, 1)
-    return r
-
-
-def Ca_sum(x, Q2):
-    #f = lambda u: (1/u + u)*q_2(u, x, Q2)*np.log(1 - u) / (1 - u)
-    f = lambda z: 1/z * (1 + x*x/z/z) * np.log(1 - x/z) * q_sum(z, Q2)
-    r = MC_div(f, x, 1)
-    return r
-
 def C3(x, Q2, flavour):
     f = lambda z: -(1/z + x/z/z) * q_s(z, Q2, flavour)
-    r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
-    return r
-
-def C3_sum(x, Q2):
-    f = lambda z: -(1/z + x/z/z) * q_s_sum(z, Q2)
     r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
     return r
 
@@ -210,19 +149,7 @@ def C(x, Q2, flavour, i):
         r.append(C3(x, Q2, flavour))
     ra = np.sum(r)
     assert np.isfinite(ra), f'Coefficient function is not finite C parts: {r}'
-    return r
-
-def C_sum(x, Q2, i):
-    #Cbd = lambda z: ((1 + x*x/z/z)/(z - x) * np.log(x/z) + (3/z + 2*x/z/z)) * q_s(z, Q2) 
-    #r, err = integrate.quad(Cbd, 1, x)
-    r = Cb_sum(x, Q2) + Cd_sum(x, Q2, i)
-    # Ce
-    #r += pdf.xfxQ2(flavour, x, Q2)/x * (9/2 + np.pi**2/3)
-    r += Ce_sum(x, Q2)
-    r += Cc_sum(x, Q2) + Ca_sum(x, Q2)
-    if i == 3:
-        r += C3_sum(x, Q2)
-    return r 
+    return ra
 
 def F1_nlo(x, Q2):
     #x, Q2 = args
@@ -264,26 +191,6 @@ def F3_nlo(x, Q2):
     assert np.isfinite(F3), f"F3 not finite: {F3}, x: {x}, Q2: {Q2}"
     return F3
 
-def Fi_nlo_sum(x, Q2, i):
-    #x, Q2 = args
-
-    quarks = ['up', 'down', 'strange', 'charm']
-    flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
-    anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
-    gluon = 2*Cg(x, Q2, i)
-    if i == 1:
-        K = 1/4
-        Fi_lo = np.sum(np.array([q_s(x, Q2, flavours[q]) + q_s(x, Q2, anti_flavours[q]) for q in quarks]))
-    elif i == 2:
-        K = 1/2
-        Fi_lo = np.sum(np.array([q_s(x, Q2, flavours[q]) + q_s(x, Q2, anti_flavours[q]) for q in quarks]))
-    elif i == 3:
-        K = 1/2
-        Fi_lo = np.sum(np.array([q_s(x, Q2, flavours[q]) - q_s(x, Q2, anti_flavours[q]) for q in quarks]))
-
-    #Fi_nlo = pdf.alphasQ2(Q2)*(C_sum(x, Q2, i) + gluon)
-    return K*x*(Fi_lo + Fi_nlo)
-
 
 def Fi_lo(x, Q2, i):
     quarks = ['up', 'down', 'strange', 'charm']
@@ -306,9 +213,6 @@ def struc_LO(x, Q2):
 def struc_NLO(x, Q2):
     return F1_nlo(x, Q2), F2_nlo(x, Q2), F3_nlo(x, Q2)
 
-def struc_NLO_sum(x, Q2):
-    return [Fi_nlo_sum(x, Q2, i) for i in [1, 2, 3]] 
-
 def struc_NLO_m(x, Q2):
     assert x < 1.0, 'x cant be exactly 1.0'
     pool = multiprocessing.Pool(processes=3)
@@ -318,17 +222,6 @@ def struc_NLO_m(x, Q2):
     f1 =functools.partial(F1_nlo, x, Q2)
     f2 =functools.partial(F2_nlo, x, Q2)
     f3 =functools.partial(F3_nlo, x, Q2)
-    res = pool.map(smap, [f1, f2, f3])
-    return res
-
-def struc_NLO_m_sum(x, Q2):
-    pool = multiprocessing.Pool(processes=3)
-#    f1 = Process(target=F1_nlo, args=(x, Q2))
-    #F1_nlo(x, Q2), F2_nlo(x, Q2), F3_nlo(x, Q2)
-    #res = pool.map(smap, ([F1_nlo, F2_nlo, F3_nlo], [x, x, x], [Q2, Q2, Q2]))
-    f1 =functools.partial(Fi_nlo_sum, x, Q2, 1)
-    f2 =functools.partial(Fi_nlo_sum, x, Q2, 2)
-    f3 =functools.partial(Fi_nlo_sum, x, Q2, 3)
     res = pool.map(smap, [f1, f2, f3])
     return res
 
@@ -360,6 +253,8 @@ def Fs():
     axis[0].set_xscale('log')
     axis[1].set_xscale('log')
     axis[2].set_xscale('log')
+    axis[2].set_xlabel('$x$')
+    axis[2].set_ylabel('$xF$')
     axis[0].legend()
     axis[1].legend()
     axis[2].legend()
@@ -391,5 +286,6 @@ def C_parts():
 
 
 if __name__ == '__main__':
-    C_parts()
+    #C_parts()
+    Fs()
     #test(C,-2, 1)
