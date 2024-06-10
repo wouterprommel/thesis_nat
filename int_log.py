@@ -222,7 +222,7 @@ for name, pdf in [(name, nlo_pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
 #for name, pdf in [('log40', pdf_40)]:
 # 0, 19 all 
 # 7, 8 for 1e6
-    for i in range(0, 1): # 19 to end
+    for i in range(0, 4): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
         cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True, multithread=True)

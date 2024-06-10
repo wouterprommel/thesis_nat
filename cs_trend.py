@@ -73,6 +73,9 @@ pdf31_DIY_err = np.array(df['pdf31_DIY_err'].to_list())
 pdf31_LO_x2 = np.array(df['pdf31_LO_x2'].to_list()) 
 pdf31_LO_x2_err = np.array(df['pdf31_LO_x2_err'].to_list())
 
+pdf31_NLO= np.array(df['pdf31_NLO_acc_1'].to_list()) 
+pdf31_NLO_err = np.array(df['pdf31_NLO_acc_1_err'].to_list())
+
 mean = (proton_pdf31 + neutron_pdf31) / 2
 print(neutron_pdf31.shape)
 print(mean.shape)
@@ -127,8 +130,8 @@ if True:
     x40_err = pdf40_x7_err
     x21 = log21
     x21_err = log21_err
-    exp = pdf31_LO_x2
-    exp_err = pdf31_LO_x2_err
+    exp = pdf31_NLO
+    exp_err = pdf31_NLO_err
 
     fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
     #plt.plot(E_nu, ref_cs, label='ref')
@@ -171,7 +174,7 @@ if True:
     axis[1].set_xlim(1e3, 1e10)
     axis[1].set_ylabel(r'$\sigma_{\nu} /\ \sigma_{\nu}^{ref}$')
 
-    plt.savefig(path.fig_path() + "pdf31_LO_x2.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(path.fig_path() + "pdf31_NLO.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
 if False:

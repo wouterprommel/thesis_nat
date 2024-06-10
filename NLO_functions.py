@@ -210,7 +210,7 @@ def C(x, Q2, flavour, i):
         r.append(C3(x, Q2, flavour))
     ra = np.sum(r)
     assert np.isfinite(ra), f'Coefficient function is not finite C parts: {r}'
-    return ra
+    return r
 
 def C_sum(x, Q2, i):
     #Cbd = lambda z: ((1 + x*x/z/z)/(z - x) * np.log(x/z) + (3/z + 2*x/z/z)) * q_s(z, Q2) 
@@ -332,9 +332,7 @@ def struc_NLO_m_sum(x, Q2):
     res = pool.map(smap, [f1, f2, f3])
     return res
 
-if __name__ == '__main__':
-    
-    #test(C,-2, 1)
+def Fs():
     version = 1.4
 
     with warnings.catch_warnings():
@@ -373,3 +371,25 @@ if __name__ == '__main__':
     #print(r)
     #test(F3_nlo, 3, 1)
     #print(pdf.xfxQ2(1, 1, 100))
+
+def C_parts():
+    xmin = -4
+    X = np.logspace(xmin, 1, 1000, endpoint=False)
+    X = X[X < 1.0]
+    Q2 = 1e6
+    R = []
+    G = []
+    for x in tqdm(X):
+        assert x < 1.0
+        G.append(np.array(C(x, Q2, 1, 2)) * x)
+    G = np.array(G)
+    print(G.shape, len(G[0]))
+    for i in range(len(G[0])):
+        plt.plot(X, G[:, i], label=f'{i=}')
+    plt.legend()
+    plt.show()
+
+
+if __name__ == '__main__':
+    C_parts()
+    #test(C,-2, 1)
