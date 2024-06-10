@@ -49,7 +49,7 @@ class cs_neutrino_nucleon:
         #self.lnQ2max = self.s
 
         #self.xmin = pdf.xMin
-        self.xmin = 1e-7
+        self.xmin = 1.5e-5#1e-7
         #print(f'{self.lnQ2min=}, {self.lnQ2max}')
 
         self.calc_count = 0
@@ -214,7 +214,7 @@ nlo_pdf_31 = lhapdf.mkPDF("NNPDF31_nlo_as_0118_mc")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf31_NLO_acc_1'
+name = 'pdf31_NLO_acc_1_x4.8'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
@@ -222,11 +222,12 @@ for name, pdf in [(name, nlo_pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
 #for name, pdf in [('log40', pdf_40)]:
 # 0, 19 all 
 # 7, 8 for 1e6
-    for i in range(0, 4): # 19 to end
+    for i in range(6, 7): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
         cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True, multithread=True)
         print('physical', cs.physical)
+        print(f'Calculating for E_nu: {E_nu}')
         if cs.physical:
             sigma, err = cs.calc()
         else:

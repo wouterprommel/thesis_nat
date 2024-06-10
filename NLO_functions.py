@@ -230,12 +230,13 @@ def Fs():
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        Q2 = 1e8
-        xmin = -4
+        Q2 = 1e12
+        xmin = -4.8 #-4.8 is minimum for Q2=1e4, Q2=1e8, and probly for 1e12
         s = []
         s_lo = []
         ts = datetime.now()
         X = np.logspace(xmin, 1, 100, endpoint=False)
+        print(f"X min is {X.min()}")
         X = X[X < 1.0]
         for x in tqdm(X):
             s.append(struc_NLO_m(x, Q2) * np.array([x, x, 1]))
@@ -276,7 +277,7 @@ def C_parts():
     G = []
     for x in tqdm(X):
         assert x < 1.0
-        G.append(np.array(C(x, Q2, 1, 2)) * x)
+        G.append(np.array(C(x, Q2, 1, 2)) * x*x)
     G = np.array(G)
     print(G.shape, len(G[0]))
     for i in range(len(G[0])):
