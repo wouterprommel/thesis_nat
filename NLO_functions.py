@@ -158,7 +158,7 @@ def F1_nlo(x, Q2):
     flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
     anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
     gluon = 2*Cg(x, Q2, 1)
-    F1 = np.sum(np.array([q_s(x, Q2, flavours[q]) +  q_s(x, Q2, anti_flavours[q]) 
+    F1 = np.sum(np.array([q_s(x, Q2, flavours[q]) +  q_s(x, Q2, anti_flavours[q])  #for q in quarks]))
                           + pdf.alphasQ2(Q2)*(C(x, Q2, flavours[q], 1) + C(x, Q2, anti_flavours[q], 1)) for q in quarks]))
     F1 += pdf.alphasQ2(Q2)*gluon*4
     F1 *= K1*x
@@ -172,7 +172,7 @@ def F2_nlo(x, Q2):
     flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
     anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
     gluon = 2*Cg(x, Q2, 2)
-    F2 = np.sum(np.array([q_s(x, Q2, flavours[q]) +  q_s(x, Q2, anti_flavours[q]) 
+    F2 = np.sum(np.array([q_s(x, Q2, flavours[q]) +  q_s(x, Q2, anti_flavours[q]) # for q in quarks]))
                           + pdf.alphasQ2(Q2)*(C(x, Q2, flavours[q], 2) + C(x, Q2, anti_flavours[q], 2)) for q in quarks]))
     F2 += pdf.alphasQ2(Q2)*gluon*4
     F2 *= K2*x
@@ -185,7 +185,7 @@ def F3_nlo(x, Q2):
     quarks = ['up', 'down', 'strange', 'charm']
     flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
     anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
-    F3 = np.sum(np.array([q_s(x, Q2, flavours[q]) -  q_s(x, Q2, anti_flavours[q]) 
+    F3 = np.sum(np.array([q_s(x, Q2, flavours[q]) -  q_s(x, Q2, anti_flavours[q]) # for q in quarks]))
                           + pdf.alphasQ2(Q2)*(C(x, Q2, flavours[q], 3) - C(x, Q2, anti_flavours[q], 3)) for q in quarks]))
     F3 *= K3*x
     assert np.isfinite(F3), f"F3 not finite: {F3}, x: {x}, Q2: {Q2}"

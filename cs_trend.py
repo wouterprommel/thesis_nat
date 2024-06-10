@@ -76,6 +76,11 @@ pdf31_LO_x2_err = np.array(df['pdf31_LO_x2_err'].to_list())
 pdf31_NLO= np.array(df['pdf31_NLO_acc_1'].to_list()) 
 pdf31_NLO_err = np.array(df['pdf31_NLO_acc_1_err'].to_list())
 
+pdf31n_LO_x7 = np.array(df['pdf31n_LO_acc_1_x9'].to_list()) 
+pdf31n_LO_x7_err = np.array(df['pdf31n_LO_acc_1_x9_err'].to_list())
+pdf31_LO_x9 = np.array(df['pdf31_LO_acc_1_x9'].to_list()) 
+pdf31_LO_x9_err = np.array(df['pdf31_LO_acc_1_x9_err'].to_list())
+
 mean = (proton_pdf31 + neutron_pdf31) / 2
 print(neutron_pdf31.shape)
 print(mean.shape)
@@ -124,14 +129,16 @@ if False:
     plt.show()
 
 if True:
-    x31 = pdf31_x7
-    x31_err = pdf31_x7_err
+    x31 = log31
+    x31_err = log31_err
+    label1 = 'PDF3.1 LO with xmin = 1e-9'
     x40 = pdf40_x7
     x40_err = pdf40_x7_err
     x21 = log21
     x21_err = log21_err
-    exp = pdf31_NLO
-    exp_err = pdf31_NLO_err
+    exp = pdf31n_LO_x7
+    exp_err = pdf31n_LO_x7_err
+    label3 = 'PDF3.1 LO with xmin = 1e-9'
 
     fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
     #plt.plot(E_nu, ref_cs, label='ref')
@@ -140,8 +147,8 @@ if True:
     #plt.plot(E, pdf31, label='pdf31')
     #axis[0].errorbar(E, logstruc, linestyle='-', marker='.', label='PDF3.1 NLO')
     #axis[0].errorbar(E, x21, yerr=x21_err, linestyle='-', marker='.', label='PDF2.1 LO')
-    axis[0].errorbar(E, exp, yerr=exp_err, linestyle='-', marker='.', label='PDF3.1 LO with xmin = 1e-2')
-    axis[0].errorbar(E, x31, yerr=x31_err, linestyle='-', marker='.', label='PDF3.1 LO with xmin = 1e-7')
+    axis[0].errorbar(E, exp, yerr=exp_err, linestyle='-', marker='.', label=label3)
+    axis[0].errorbar(E, x31, yerr=x31_err, linestyle='-', marker='.', label=label1)
     #axis[0].errorbar(E, x40, yerr=x40_err, linestyle='-', marker='.', label='PDF4.0 LO')
     axis[0].errorbar(E, cs, linestyle='-', marker='.', label='reference')
     #pltot(E, pdf40, label='pdf40')
@@ -165,8 +172,8 @@ if True:
     err_r = x21_err/cs
     #axis[1].errorbar(E, logstruc/cs, linestyle='-', marker='.', label='PDF3.1 NLO')
     #axis[1].errorbar(E[:-6], ratio[:-6], yerr=err_r[:-6], linestyle='-', marker='.', label='PDF2.1 LO')
-    axis[1].errorbar(E, exp/cs, yerr=exp_err/cs, linestyle='-', marker='.', label='PDF3.1 LO with xmin = 1e-2')
-    axis[1].errorbar(E, x31/cs, yerr=x31_err/cs, linestyle='-', marker='.', label='PDF3.1 LO with xmin = 1e-7')
+    axis[1].errorbar(E, exp/cs, yerr=exp_err/cs, linestyle='-', marker='.', label=label3)
+    axis[1].errorbar(E, x31/cs, yerr=x31_err/cs, linestyle='-', marker='.', label=label1)
     #axis[1].errorbar(E, x40/cs, yerr=x40_err/cs, linestyle='-', marker='.', label='PDF4.0 LO')
     axis[1].set_xscale('log')
     #axis[1].legend()
@@ -174,7 +181,7 @@ if True:
     axis[1].set_xlim(1e3, 1e10)
     axis[1].set_ylabel(r'$\sigma_{\nu} /\ \sigma_{\nu}^{ref}$')
 
-    plt.savefig(path.fig_path() + "pdf31_NLO.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(path.fig_path() + "pdf31_LO_comparison.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
 if False:

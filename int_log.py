@@ -61,6 +61,8 @@ class cs_neutrino_nucleon:
 
         self.compare_lo = []
         self.compare_nlo = []
+        self.compare_x = []
+        self.compare_q = []
 
     def calc(self):
         if self.physical:
@@ -69,13 +71,13 @@ class cs_neutrino_nucleon:
                 warnings.simplefilter("ignore")
                 if self.multithread:
                     list_Q2 = np.linspace(self.lnQ2min, self.lnQ2max, self.maxworkers + 1)
+                    errs = []
                     splits_Q2 = []
                     for i in range(self.maxworkers):
                         splits_Q2.append((list_Q2[i], list_Q2[i+1]))
 
                     print(splits_Q2)
                     cs = 0
-                    errs = []
                     with cf.ThreadPoolExecutor(max_workers=self.maxworkers) as executor:
                         future_split = {executor.submit(integrate.quad, self.diff_lnQ2, split_Q2[0], split_Q2[1], epsabs=self.precision, epsrel=self.precision): split_Q2 for split_Q2 in splits_Q2}
                         for future in cf.as_completed(future_split):
@@ -85,11 +87,11 @@ class cs_neutrino_nucleon:
                             err = np.sqrt(np.sum([i*i for i in errs]))
                             print(f'cumulative cs: {cs}, combined err: {err}')
 
+                    err = np.sqrt(np.sum([i*i for i in errs]))
 
                 else:
                     cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max, epsabs=self.precision)
             self.pbar.close()
-            err = np.sqrt(np.sum([i*i for i in errs]))
             return cs, err
         else:
             print('E_nu to high; s > q2max')
@@ -133,8 +135,11 @@ class cs_neutrino_nucleon:
     def struc(self, x, Q2):
         if not self.anti:
             if self.target == 'isoscalar':
-                F2 = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))
-                xF3 = ((self.pdf.xfxQ2(2, x, Q2) - self.pdf.xfxQ2(-2, x, Q2)) + (self.pdf.xfxQ2(1, x, Q2) - self.pdf.xfxQ2(-1, x, Q2)) + 2*self.pdf.xfxQ2(3, x, Q2) - 2*self.pdf.xfxQ2(-4, x, Q2))
+                #F2 = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + 2*self.pdf.xfxQ2(3, x, Q2) + 2*self.pdf.xfxQ2(-4, x, Q2))
+                #xF3 = ((self.pdf.xfxQ2(2, x, Q2) - self.pdf.xfxQ2(-2, x, Q2)) + (self.pdf.xfxQ2(1, x, Q2) - self.pdf.xfxQ2(-1, x, Q2)) + 2*self.pdf.xfxQ2(3, x, Q2) - 2*self.pdf.xfxQ2(-4, x, Q2))
+                # LO method 2
+                F2 = (self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(2, x, Q2) + self.pdf.xfxQ2(-1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + self.pdf.xfxQ2(3, x, Q2) + self.pdf.xfxQ2(-3, x, Q2) + self.pdf.xfxQ2(4, x, Q2) + self.pdf.xfxQ2(-4, x, Q2))
+                xF3 = ((self.pdf.xfxQ2(2, x, Q2) - self.pdf.xfxQ2(-2, x, Q2)) + (self.pdf.xfxQ2(1, x, Q2) - self.pdf.xfxQ2(-1, x, Q2)) + self.pdf.xfxQ2(3, x, Q2) - self.pdf.xfxQ2(-3, x, Q2) + self.pdf.xfxQ2(4, x, Q2) - self.pdf.xfxQ2(-4, x, Q2))
 
             elif self.target == 'proton':
                 F2 = 2*(self.pdf.xfxQ2(1, x, Q2) + self.pdf.xfxQ2(-2, x, Q2) + self.pdf.xfxQ2(3, x, Q2) + self.pdf.xfxQ2(-4, x, Q2))
@@ -178,8 +183,8 @@ class cs_neutrino_nucleon:
         fact = self.convert * self.GF2 / 4 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2)
 
         if True:
-            if self.calc_count >= 100:
-                save_pickle((self.compare_lo, self.compare_nlo), 'compare_lo_nlo')
+            if self.calc_count >= 1000:
+                save_pickle([self.compare_lo, self.compare_nlo, self.compare_x, self.compare_q], 'compare_lo_nlo')
                 quit()
 
             F2, xF3 = self.struc(x, Q2)
@@ -187,18 +192,23 @@ class cs_neutrino_nucleon:
 
             fact2 = self.convert * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
 
-            xF1, F2, xF3 = NLO_functions.struc_LO(x, Q2) #self.struc_LO(x, Q2)
+            xF1, F2, xF3 = NLO_functions.struc_NLO_m(x, Q2) #self.struc_LO(x, Q2)
             nlo = fact2 * (F2*(1-y) + xF1*y*y + xF3*y*(1 - y/2))
 
             #xF1, F2, xF3 = NLO_functions.struc_LO(x, Q2) #self.struc_LO(x, Q2)
             #lo = fact2 * (F2*(1-y) + xF1*y*y + xF3*y*(1 - y/2))
+            abs_diff = np.abs(nlo - lo)
+            if abs_diff > 0.02:
+                print(f'{x=}, {Q2=}, {lnx=} ')
 
             self.compare_lo.append(lo)
             self.compare_nlo.append(nlo)
+            self.compare_x.append(x)
+            self.compare_q.append(Q2)
             return nlo
 
         if self.NLO:
-            fact = self.convert * 2 * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
+            fact = self.convert * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
             #xF1, F2, xF3 = self.struc_NLO(x, Q2)
 
             xF1, F2, xF3 = NLO_functions.struc_LO(x, Q2) #self.struc_LO(x, Q2)
@@ -222,18 +232,19 @@ nlo_pdf_31 = lhapdf.mkPDF("NNPDF31_nlo_as_0118_mc")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf31_NLO_acc_1_x4.8'
+name = 'pdf31_LO_acc_1_x9'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
-for name, pdf in [(name, nlo_pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
+for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
+    print(f'PDF values: {pdf.q2Min=}')
 #for name, pdf in [('log40', pdf_40)]:
 # 0, 19 all 
 # 7, 8 for 1e6
     for i in range(0, 19): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
-        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True, multithread=True)
+        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True, multithread=True, precision=1)
         print('physical', cs.physical)
         print(f'Calculating for E_nu: {E_nu}')
         if cs.physical:
