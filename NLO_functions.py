@@ -196,13 +196,13 @@ def Fi_lo(x, Q2, i):
     quarks = ['up', 'down', 'strange', 'charm']
     flavours = {'up':2, 'down':1, 'strange':3, 'charm':4,}
     anti_flavours = {'up':-2, 'down':-1, 'strange':-3, 'charm':-4}
-    if i == 3:
-        F = np.sum((1/2)*np.array([pdf.xfxQ2(flavours[q], x, Q2) - pdf.xfxQ2(anti_flavours[q], x, Q2) for q in quarks]))
+    if i == 1:
+        F = np.sum((1/4)*np.array([q_s(x, Q2, flavours[q]) + q_s(x, Q2, anti_flavours[q]) for q in quarks]))
     elif i == 2:
-        F = np.sum((1/2)*np.array([pdf.xfxQ2(flavours[q], x, Q2) + pdf.xfxQ2(anti_flavours[q], x, Q2) for q in quarks])) 
-    elif i == 1:
-        F = np.sum((1/4)*np.array([pdf.xfxQ2(flavours[q], x, Q2) + pdf.xfxQ2(anti_flavours[q], x, Q2) for q in quarks]))
-    return F
+        F = np.sum((1/2)*np.array([q_s(x, Q2, flavours[q]) + q_s(x, Q2, anti_flavours[q]) for q in quarks])) 
+    elif i == 3:
+        F = np.sum((1/2)*np.array([q_s(x, Q2, flavours[q]) - q_s(x, Q2, anti_flavours[q]) for q in quarks]))
+    return F * x
 
 def smap(f, *args):
     return f(*args)

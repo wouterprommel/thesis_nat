@@ -49,10 +49,12 @@ class cs_neutrino_nucleon:
         #self.lnQ2max = self.s
 
         #self.xmin = pdf.xMin
-        self.xmin = 1.5e-5#1e-7
+        #self.xmin = 1.5e-5#1e-7
+        self.xmin = 1e-9
         #print(f'{self.lnQ2min=}, {self.lnQ2max}')
 
         self.calc_count = 0
+        self.count_xmin = 0
         self.maxworkers = 8
         self.multithread = multithread
         self.precision = precision
@@ -73,19 +75,21 @@ class cs_neutrino_nucleon:
 
                     print(splits_Q2)
                     cs = 0
-                    err = 0
+                    errs = []
                     with cf.ThreadPoolExecutor(max_workers=self.maxworkers) as executor:
                         future_split = {executor.submit(integrate.quad, self.diff_lnQ2, split_Q2[0], split_Q2[1], epsabs=self.precision, epsrel=self.precision): split_Q2 for split_Q2 in splits_Q2}
                         for future in cf.as_completed(future_split):
                             result = future.result()
                             cs += result[0]
-                            err += result[1]
-                            print(f'cumulative cs: {cs}, cumulative err: {err}')
+                            errs.append(result[1])
+                            err = np.sqrt(np.sum([i*i for i in errs]))
+                            print(f'cumulative cs: {cs}, combined err: {err}')
 
 
                 else:
                     cs, err = integrate.quad(self.diff_lnQ2, self.lnQ2min, self.lnQ2max, epsabs=self.precision)
             self.pbar.close()
+            err = np.sqrt(np.sum([i*i for i in errs]))
             return cs, err
         else:
             print('E_nu to high; s > q2max')
@@ -113,6 +117,8 @@ class cs_neutrino_nucleon:
 
     def diff_lnQ2(self, lnQ2):
         lnxmin = lnQ2 - np.log(self.s)
+        #print(f'-----> lnxmin: {np.exp(lnxmin)}')
+        #lnxmin = np.max([lnxmin, np.log(self.xmin)])
         lnxmax = -1e-9 # or just 0 ?
         #lnxmin = np.exp(lnQ2 - np.log(self.s))
         #lnxmin = np.log(lnQ2/self.s)
@@ -157,6 +163,8 @@ class cs_neutrino_nucleon:
     def ddiff_lnx_lnQ2(self, lnx, Q2):
         self.calc_count += 1
         x = np.max([np.exp(lnx), self.xmin])
+        if x == self.xmin:
+            self.count_xmin += 1
         #x = np.exp(lnx)
         #x = lnx
         #x = 0.1
@@ -169,13 +177,13 @@ class cs_neutrino_nucleon:
         Ym = 1 - omy2
         fact = self.convert * self.GF2 / 4 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2)
 
-        if False:
+        if True:
             if self.calc_count >= 100:
                 save_pickle((self.compare_lo, self.compare_nlo), 'compare_lo_nlo')
                 quit()
 
             F2, xF3 = self.struc(x, Q2)
-            lo =  fact * (Yp * F2 + Ym * xF3)
+            lo = fact * (Yp * F2 + Ym * xF3)
 
             fact2 = self.convert * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
 
@@ -193,7 +201,7 @@ class cs_neutrino_nucleon:
             fact = self.convert * 2 * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
             #xF1, F2, xF3 = self.struc_NLO(x, Q2)
 
-            xF1, F2, xF3 = NLO_functions.struc_NLO_m(x, Q2) #self.struc_LO(x, Q2)
+            xF1, F2, xF3 = NLO_functions.struc_LO(x, Q2) #self.struc_LO(x, Q2)
             #print(f'diff xF1 NLO: {xF1}, xF1 lo: {xF1_lo}, diff: {np.abs(xF1 - xF1_lo)}')
             return fact * (F2*(1-y) + xF1*y*y + xF3*y*(1 - y/2))
             # NLO from paper
@@ -207,7 +215,7 @@ class cs_neutrino_nucleon:
             return fact * (Yp * F2 + Ym * xF3)
 
 #pdf_struc = lhapdf.mkPDF("NNPDF31sx_nnlonllx_as_0118_LHCb_nf_6_SF")
-#pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
+pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 nlo_pdf_31 = lhapdf.mkPDF("NNPDF31_nlo_as_0118_mc")
 #pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
 #pdf_21 = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
@@ -222,7 +230,7 @@ for name, pdf in [(name, nlo_pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
 #for name, pdf in [('log40', pdf_40)]:
 # 0, 19 all 
 # 7, 8 for 1e6
-    for i in range(6, 7): # 19 to end
+    for i in range(0, 19): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
         cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True, multithread=True)
@@ -234,13 +242,14 @@ for name, pdf in [(name, nlo_pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
             sigma = 0.0
             err = 0.0
         dt_end = datetime.datetime.now()
+        print(f'Calc count: {cs.calc_count}, xmin count: {cs.count_xmin}')
         print(cs.calc_count)
         print()
         print(f'cs: {sigma}, err: {err}, E_nu: {E_nu}, cs/cs-ref: {sigma/df.at[i, "cs"]}')
         print(f'Time of calc: {(dt_end - dt_start)}')
         print()
 
-        if True:
+        if False:
             df.at[i, name] = sigma
             df.at[i, name + "_err"] = err
             df.to_csv('cs_3.csv', index=False)
