@@ -50,7 +50,7 @@ class cs_neutrino_nucleon:
 
         #self.xmin = pdf.xMin
         #self.xmin = 1.5e-5#1e-7
-        self.xmin = 1e-9
+        self.xmin = 1e-2
         #print(f'{self.lnQ2min=}, {self.lnQ2max}')
 
         self.calc_count = 0
@@ -120,7 +120,7 @@ class cs_neutrino_nucleon:
     def diff_lnQ2(self, lnQ2):
         lnxmin = lnQ2 - np.log(self.s)
         #print(f'-----> lnxmin: {np.exp(lnxmin)}')
-        #lnxmin = np.max([lnxmin, np.log(self.xmin)])
+        lnxmin = np.max([lnxmin, np.log(self.xmin)])
         lnxmax = -1e-9 # or just 0 ?
         #lnxmin = np.exp(lnQ2 - np.log(self.s))
         #lnxmin = np.log(lnQ2/self.s)
@@ -182,7 +182,7 @@ class cs_neutrino_nucleon:
         Ym = 1 - omy2
         fact = self.convert * self.GF2 / 4 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2)
 
-        if True:
+        if False:
             if self.calc_count >= 1000:
                 save_pickle([self.compare_lo, self.compare_nlo, self.compare_x, self.compare_q], 'compare_lo_nlo')
                 quit()
@@ -211,7 +211,7 @@ class cs_neutrino_nucleon:
             fact = self.convert * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
             #xF1, F2, xF3 = self.struc_NLO(x, Q2)
 
-            xF1, F2, xF3 = NLO_functions.struc_LO(x, Q2) #self.struc_LO(x, Q2)
+            xF1, F2, xF3 = NLO_functions.struc_NLO_m(x, Q2) #self.struc_LO(x, Q2)
             #print(f'diff xF1 NLO: {xF1}, xF1 lo: {xF1_lo}, diff: {np.abs(xF1 - xF1_lo)}')
             return fact * (F2*(1-y) + xF1*y*y + xF3*y*(1 - y/2))
             # NLO from paper
@@ -232,11 +232,11 @@ nlo_pdf_31 = lhapdf.mkPDF("NNPDF31_nlo_as_0118_mc")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf31_LO_acc_1_x9'
+name = 'pdf31n_NLO_acc_1_x2_v2'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
-for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
+for name, pdf in [(name, nlo_pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
     print(f'PDF values: {pdf.q2Min=}')
 #for name, pdf in [('log40', pdf_40)]:
 # 0, 19 all 
@@ -260,7 +260,7 @@ for name, pdf in [(name, pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
         print(f'Time of calc: {(dt_end - dt_start)}')
         print()
 
-        if False:
+        if True:
             df.at[i, name] = sigma
             df.at[i, name + "_err"] = err
             df.to_csv('cs_3.csv', index=False)

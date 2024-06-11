@@ -160,7 +160,7 @@ def F1_nlo(x, Q2):
     gluon = 2*Cg(x, Q2, 1)
     F1 = np.sum(np.array([q_s(x, Q2, flavours[q]) +  q_s(x, Q2, anti_flavours[q])  #for q in quarks]))
                           + pdf.alphasQ2(Q2)*(C(x, Q2, flavours[q], 1) + C(x, Q2, anti_flavours[q], 1)) for q in quarks]))
-    F1 += pdf.alphasQ2(Q2)*gluon*4
+    F1 += pdf.alphasQ2(Q2)*gluon *4
     F1 *= K1*x
     assert np.isfinite(F1), f"F1 not finite: {F1}"
     return F1
@@ -174,7 +174,7 @@ def F2_nlo(x, Q2):
     gluon = 2*Cg(x, Q2, 2)
     F2 = np.sum(np.array([q_s(x, Q2, flavours[q]) +  q_s(x, Q2, anti_flavours[q]) # for q in quarks]))
                           + pdf.alphasQ2(Q2)*(C(x, Q2, flavours[q], 2) + C(x, Q2, anti_flavours[q], 2)) for q in quarks]))
-    F2 += pdf.alphasQ2(Q2)*gluon*4
+    F2 += pdf.alphasQ2(Q2)*gluon *4
     F2 *= K2*x
     assert np.isfinite(F2), f"F2 not finite: {F2}"
     return F2
