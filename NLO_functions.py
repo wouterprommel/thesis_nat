@@ -105,13 +105,14 @@ def Cc(x, Q2, flavour):
 
 def Ca(x, Q2, flavour):
     #f = lambda u: (1/u + u)*q_2(u, x, Q2)*np.log(1 - u) / (1 - u)
-    f = lambda z: 1/z * (1 + x*x/z/z) * np.log(1 - x/z) * q_s(z, Q2, flavour)
-    #r = MC_div(f, x, 1)
-    r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
+    f = lambda z: 1/(z) * (1 + x*x/z/z) * np.log(1 - x/z) * q_s(z, Q2, flavour) # 1/(1 - x/z) --> 1/z when using MC_div
+    #r = MC_div(f, x, 1) # div does the f(x) - f(b)/ (1-x) part.
+    f2 = lambda z: (f(z) - f(1)) / (1 - z)
+    r, err = integrate.quad(f2, x, 1, epsabs=PRECISION)
     return r
 
 def Ce(x, Q2, flavour):
-    return -pdf.xfxQ2(flavour, x, Q2)/x * (9/2 + np.pi**2/3)
+    return -pdf.xfxQ2(flavour, x, Q2) * (9/2 + np.pi**2 /3)
 
 
 def Cd(x, Q2, flavour, i):
@@ -277,7 +278,7 @@ def C_parts():
     G = []
     for x in tqdm(X):
         assert x < 1.0
-        G.append(np.array(C(x, Q2, 1, 2)) * x*x)
+        G.append(np.array(C(x, Q2, 1, 2)) * pdf.alphasQ2(Q2) * x)
     G = np.array(G)
     print(G.shape, len(G[0]))
     for i in range(len(G[0])):
@@ -289,4 +290,4 @@ def C_parts():
 if __name__ == '__main__':
     #C_parts()
     Fs()
-    #test(C,-2, 1)
+    #test(C, 1, 1)

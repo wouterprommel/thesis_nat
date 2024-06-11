@@ -120,7 +120,7 @@ class cs_neutrino_nucleon:
     def diff_lnQ2(self, lnQ2):
         lnxmin = lnQ2 - np.log(self.s)
         #print(f'-----> lnxmin: {np.exp(lnxmin)}')
-        lnxmin = np.max([lnxmin, np.log(self.xmin)])
+        #lnxmin = np.max([lnxmin, np.log(self.xmin)])
         lnxmax = -1e-9 # or just 0 ?
         #lnxmin = np.exp(lnQ2 - np.log(self.s))
         #lnxmin = np.log(lnQ2/self.s)
@@ -232,7 +232,7 @@ nlo_pdf_31 = lhapdf.mkPDF("NNPDF31_nlo_as_0118_mc")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf31n_NLO_acc_1_x2_v2'
+name = 'pdf31n_NLO_acc_1_x2_v3'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
