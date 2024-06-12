@@ -112,7 +112,7 @@ def Ca(x, Q2, flavour):
     return r
 
 def Ce(x, Q2, flavour):
-    return -pdf.xfxQ2(flavour, x, Q2) * (9/2 + np.pi**2 /3)
+    return -pdf.xfxQ2(flavour, x, Q2)/x * (9/2 + np.pi**2 /3)
 
 
 def Cd(x, Q2, flavour, i):

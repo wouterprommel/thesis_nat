@@ -208,7 +208,7 @@ class cs_neutrino_nucleon:
             return nlo
 
         if self.NLO:
-            fact = self.convert * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
+            fact = self.convert * 2 * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
             #xF1, F2, xF3 = self.struc_NLO(x, Q2)
 
             xF1, F2, xF3 = NLO_functions.struc_NLO_m(x, Q2) #self.struc_LO(x, Q2)
@@ -227,12 +227,13 @@ class cs_neutrino_nucleon:
 #pdf_struc = lhapdf.mkPDF("NNPDF31sx_nnlonllx_as_0118_LHCb_nf_6_SF")
 pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 nlo_pdf_31 = lhapdf.mkPDF("NNPDF31_nlo_as_0118_mc")
+nlo_pdf_40 = lhapdf.mkPDF("NNPDF40_nlo_as_01180_nf_6")
 #pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
 #pdf_21 = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf31n_NLO_acc_1_x2_v3'
+name = 'pdf40n_NLO_acc_1_x2'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
