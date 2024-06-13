@@ -76,9 +76,9 @@ def g(x, Q2):
 
 def Cg(x, Q2, i):
     if i == 1:
-        f = lambda z: (10*(x/z/z * (1 - x/z)) + (1/z - 2*x/z/z + 2*x*x/z/z/z) *np.log((z- x)/x) )* g(z, Q2)
+        f = lambda z: (((1 - z)**2 + z*z)*np.log((1-z)/z) + 10*z*(1 - z)) * g(x/z, Q2)
     elif i == 2:
-        f = lambda z: (6*(x/z/z * (1 - x/z)) + (1/z - 2*x/z/z + 2*x*x/z/z/z) *np.log((z- x)/x) )* g(z, Q2)
+        f = lambda z: (((1 - z)**2 + z*z)*np.log((1-z)/z) + 6*z*(1 - z)) * g(x/z, Q2)
     elif i == 3:
         return 0
 
@@ -98,12 +98,6 @@ def q(z, Q2, flavour):
 def q_s(z, Q2, flavour):
     return pdf.xfxQ2(flavour, z, Q2)/z
 
-
-def Cc(x, Q2, flavour):
-    #x = 0.129
-    f = lambda u: -3/2/u * q_2(u, x, Q2, flavour)
-    r = MC_div(f, x, 1)
-    return r
 
 def Ca(x, Q2, flavour):
     f = lambda z: (q_s(x/z, Q2, flavour)*(1+ z*z)/z - 2*q_s(x, Q2, flavour))*np.log(1 - z)/(1-z)
@@ -126,6 +120,11 @@ def Cd(x, Q2, flavour, i):
     return r
 
 def Cb(x, Q2, flavour):
+    f = lambda z: -(1 + z*z)/(z - z*z) * np.log(z) * q_s(x/z, Q2, flavour)
+    r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
+    return r
+
+def Cc(x, Q2, flavour):
     f = lambda z: (-3/2/z * q_s(x/z, Q2, flavour) +3/2*q_s(x, Q2, flavour))/(1-z)
     r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
     f2 = lambda z: 1/(1-z)
@@ -133,7 +132,7 @@ def Cb(x, Q2, flavour):
     return r + 3/2 * q_s(x, Q2, flavour) * r2
 
 def C3(x, Q2, flavour):
-    f = lambda z: -(1/z + x/z/z) * q_s(z, Q2, flavour)
+    f = lambda z: -(1/z + 1) * q_s(x/z, Q2, flavour)
     r, err = integrate.quad(f, x, 1, epsabs=PRECISION)
     return r
 
@@ -229,12 +228,14 @@ def struc_NLO_m(x, Q2):
     return res
 
 def Fs():
-    version = 1.4
+    version = 1.5
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         Q2 = 1e12
-        xmin = -4.8 #-4.8 is minimum for Q2=1e4, Q2=1e8, and probly for 1e12
+        #xmin = -4.8 #-4.8 is minimum for Q2=1e4, Q2=1e8, and probly for 1e12
+        xmin = -9
+        #xmin = -4.8
         s = []
         s_lo = []
         ts = datetime.now()

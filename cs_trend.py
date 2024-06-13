@@ -75,13 +75,16 @@ pdf31_LO_x2_err = np.array(df['pdf31_LO_x2_err'].to_list())
 
 pdf31_NLO= np.array(df['pdf31_NLO_acc_1'].to_list()) 
 pdf31_NLO_err = np.array(df['pdf31_NLO_acc_1_err'].to_list())
-pdf31n_NLO_x2 = np.array(df['pdf31n_NLO_acc_1_x2'].to_list()) #* 2 
+pdf31n_NLO_x2 = np.array(df['pdf31n_NLO_acc_1_x2'].to_list()) * 2 
 pdf31n_NLO_x2_err = np.array(df['pdf31n_NLO_acc_1_x2_err'].to_list())
 pdf31n_NLO_x2_v2 = np.array(df['pdf31n_NLO_acc_1_x2_v2'].to_list()) * 2 
 pdf31n_NLO_x2_v2_err = np.array(df['pdf31n_NLO_acc_1_x2_v2_err'].to_list())
 
-pdf31n_NLO_acc_1_x2_v3 = np.array(df['pdf31n_NLO_acc_1_x2_v3'].to_list())
-pdf31n_NLO_acc_1_x2_v3_err = np.array(df['pdf31n_NLO_acc_1_x2_v3_err'].to_list())
+pdf31n_NLO_x9_v4 = np.array(df['pdf31n_NLO_acc_1_x9_v4'].to_list())
+pdf31n_NLO_x9_v4_err = np.array(df['pdf31n_NLO_acc_1_x9_v4_err'].to_list())
+
+pdf40n_NLO_acc_1_x2 = np.array(df['pdf40n_NLO_acc_1_x2_v2'].to_list())
+pdf40n_NLO_acc_1_x2_err = np.array(df['pdf40n_NLO_acc_1_x2_v2_err'].to_list())
 
 pdf31n_LO_x9 = np.array(df['pdf31n_LO_acc_1_x9'].to_list()) 
 pdf31n_LO_x9_err = np.array(df['pdf31n_LO_acc_1_x9_err'].to_list())
@@ -139,17 +142,17 @@ if True:
     x31 = log31
     x31_err = log31_err
     label1 = 'PDF3.1 LO xmin=1e-9'
+
     x40 = pdf40_x7
     x40_err = pdf40_x7_err
-    x21 = pdf31_LO_x2
-    x21_err = pdf31_LO_x2_err
-    label2 = 'PDF3.1 LO xmin=1e-2'
-    exp = pdf31n_NLO_acc_1_x2_v3
-    exp_err = pdf31n_NLO_acc_1_x2_v3_err
-    label3 = 'PDF3.1 NLO v3 with xmin = 1e-2'
-    exp2 = pdf31n_NLO_x2 * 2
-    exp2_err = pdf31n_NLO_x2_err
-    label4 = 'PDF3.1 NLO with xmin = 1e-2'
+
+    x21 = pdf31n_NLO_x2
+    x21_err = pdf31n_NLO_x2_err
+    label2 = 'PDF3.1 NLO, xmin=1e-2'
+    
+    exp = pdf31n_NLO_x9_v4
+    exp_err = pdf31n_NLO_x9_v4_err
+    label3 = 'PDF3.1 NLO, xmin = 1e-9'
 
     fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
     #plt.plot(E_nu, ref_cs, label='ref')
@@ -158,9 +161,8 @@ if True:
     #plt.plot(E, pdf31, label='pdf31')
     #axis[0].errorbar(E, logstruc, linestyle='-', marker='.', label='PDF3.1 NLO')
     axis[0].errorbar(E, x31, yerr=x31_err, linestyle='-', marker='.', label=label1)
-    axis[0].errorbar(E, x21, yerr=x21_err, linestyle='-', marker='.', label=label2)
+    #axis[0].errorbar(E, x21, yerr=x21_err, linestyle='-', marker='.', label=label2)
     axis[0].errorbar(E, exp, yerr=exp_err, linestyle='-', marker='.', label=label3)
-    axis[0].errorbar(E, exp2, yerr=exp2_err, linestyle='-', marker='.', label=label4)
     #axis[0].errorbar(E, x40, yerr=x40_err, linestyle='-', marker='.', label='PDF4.0 LO')
     axis[0].errorbar(E, cs, linestyle='-', marker='.', label='reference')
     #pltot(E, pdf40, label='pdf40')
@@ -185,9 +187,8 @@ if True:
     #axis[1].errorbar(E, logstruc/cs, linestyle='-', marker='.', label='PDF3.1 NLO')
     #axis[1].errorbar(E[:-6], ratio[:-6], yerr=err_r[:-6], linestyle='-', marker='.', label='PDF2.1 LO')
     axis[1].errorbar(E, x31/cs, yerr=x31_err/cs, linestyle='-', marker='.', label=label1)
-    axis[1].errorbar(E, x21/cs, yerr=x21_err/cs, linestyle='-', marker='.', label=label2)
+    #axis[1].errorbar(E, x21/cs, yerr=x21_err/cs, linestyle='-', marker='.', label=label2)
     axis[1].errorbar(E, exp/cs, yerr=exp_err/cs, linestyle='-', marker='.', label=label3)
-    axis[1].errorbar(E, exp2/cs, yerr=exp2_err/cs, linestyle='-', marker='.', label=label4)
     #axis[1].errorbar(E, x40/cs, yerr=x40_err/cs, linestyle='-', marker='.', label='PDF4.0 LO')
     axis[1].set_xscale('log')
     #axis[1].legend()
@@ -195,7 +196,7 @@ if True:
     axis[1].set_xlim(1e3, 1e10)
     axis[1].set_ylabel(r'$\sigma_{\nu} /\ \sigma_{\nu}^{ref}$')
 
-    #plt.savefig(path.fig_path() + "pdf31_NLO_x2_v3.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(path.fig_path() + "pdf31n_NLO_x9_v4.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
 if False:

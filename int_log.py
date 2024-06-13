@@ -1,4 +1,4 @@
-import NLO_functions
+import NLO_functions2 as NLO_functions
 import lhapdf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,8 +49,8 @@ class cs_neutrino_nucleon:
         #self.lnQ2max = self.s
 
         #self.xmin = pdf.xMin
-        #self.xmin = 1.5e-5#1e-7
-        self.xmin = 1e-2
+        #self.xmin = 1.5e-5 #1e-7
+        self.xmin = 1e-9
         #print(f'{self.lnQ2min=}, {self.lnQ2max}')
 
         self.calc_count = 0
@@ -183,7 +183,7 @@ class cs_neutrino_nucleon:
         fact = self.convert * self.GF2 / 4 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2)
 
         if False:
-            if self.calc_count >= 1000:
+            if self.calc_count >= 200:
                 save_pickle([self.compare_lo, self.compare_nlo, self.compare_x, self.compare_q], 'compare_lo_nlo')
                 quit()
 
@@ -199,7 +199,7 @@ class cs_neutrino_nucleon:
             #lo = fact2 * (F2*(1-y) + xF1*y*y + xF3*y*(1 - y/2))
             abs_diff = np.abs(nlo - lo)
             if abs_diff > 0.02:
-                print(f'{x=}, {Q2=}, {lnx=} ')
+                print(f'{x=}, {Q2=}, {lnx=}, {abs_diff=} ')
 
             self.compare_lo.append(lo)
             self.compare_nlo.append(nlo)
@@ -208,7 +208,7 @@ class cs_neutrino_nucleon:
             return nlo
 
         if self.NLO:
-            fact = self.convert * 2 * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
+            fact = self.convert * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
             #xF1, F2, xF3 = self.struc_NLO(x, Q2)
 
             xF1, F2, xF3 = NLO_functions.struc_NLO_m(x, Q2) #self.struc_LO(x, Q2)
@@ -228,20 +228,17 @@ class cs_neutrino_nucleon:
 pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 nlo_pdf_31 = lhapdf.mkPDF("NNPDF31_nlo_as_0118_mc")
 nlo_pdf_40 = lhapdf.mkPDF("NNPDF40_nlo_as_01180_nf_6")
-#pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
+pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
 #pdf_21 = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf40n_NLO_acc_1_x2'
+name = 'pdf31n_NLO_acc_1_x5_v4'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
 for name, pdf in [(name, nlo_pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
     print(f'PDF values: {pdf.q2Min=}')
-#for name, pdf in [('log40', pdf_40)]:
-# 0, 19 all 
-# 7, 8 for 1e6
     for i in range(0, 19): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
