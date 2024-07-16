@@ -40,7 +40,8 @@ err31 = np.stack([log31 + log31_err, log31 - log31_err])
 err40 = np.stack([log40 + log40_err, log40 - log40_err])
 
 cs = np.array(df['cs'].to_list())
-anti_cs = np.array(df['anti_cs'].to_list())
+cs_anti = np.array(df['cs_anti'].to_list())
+#anti_cs = np.array(df['anti_cs'].to_list())
 npoints = np.array(df['used_points'].to_list())
 
 
@@ -94,42 +95,49 @@ pdf31n_LO_x9_err = np.array(df['pdf31n_LO_acc_1_x9_err'].to_list())
 pdf31_LO_x9 = np.array(df['pdf31_LO_acc_1_x9'].to_list()) 
 pdf31_LO_x9_err = np.array(df['pdf31_LO_acc_1_x9_err'].to_list())
 
+
+
+
+pdf40_NLO_anti = np.array(df['pdf40_NLO_acc_0.01_x9_anti'].to_list())
+pdf31_NLO_anti = np.array(df['pdf31_NLO_acc_0.01_x9_anti'].to_list())
+pdf31_LO_anti = np.array(df['pdf31_LO_acc_0.01_x9_anti'].to_list())
+pdf21_LO_anti = np.array(df['pdf21_LO_acc_0.01_x9_anti'].to_list())
+pdf40_LO_anti = np.array(df['pdf40_LO_acc_0.01_x9_anti'].to_list())
+
+pdf40_NLO_anti_err = np.array(df['pdf40_NLO_acc_0.01_x9_anti_err'].to_list())
+pdf31_NLO_anti_err = np.array(df['pdf31_NLO_acc_0.01_x9_anti_err'].to_list())
+pdf31_LO_anti_err = np.array(df['pdf31_LO_acc_0.01_x9_anti_err'].to_list())
+pdf21_LO_anti_err = np.array(df['pdf21_LO_acc_0.01_x9_anti_err'].to_list())
+pdf40_LO_anti_err = np.array(df['pdf40_LO_acc_0.01_x9_anti_err'].to_list())
+
+
 mean = (proton_pdf31 + neutron_pdf31) / 2
 print(neutron_pdf31.shape)
 print(mean.shape)
 
-if False:
-    fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
-    axis[0].errorbar(E, proton_pdf31, yerr=proton_pdf31_err, linestyle='-', marker='.', label='proton PDF31 LO')
-    axis[0].errorbar(E, neutron_pdf31, yerr=neutron_pdf31_err, linestyle='-', marker='.', label='neutron PDF31 LO')
-    axis[0].errorbar(E, log31, yerr=log31_err, linestyle='-', marker='.', label='isoscalar PDF31 LO')
-    axis[0].set_xscale('log')
-    axis[0].set_yscale('log')
-    #axis[0].set_xlabel(r'$E_{\nu}$ [GeV]')
-    axis[0].set_ylabel(r'$\sigma_{\nu}$ [Pb]')
-    axis[1].errorbar(E, proton_pdf31/cs, yerr=proton_pdf31_err/cs, linestyle='-', marker='.', label='proton PDF31 LO')
-    axis[1].errorbar(E, neutron_pdf31/cs, yerr=neutron_pdf31_err/cs, linestyle='-', marker='.', label='neutron PDF31 LO')
-    axis[1].errorbar(E, log31/cs, yerr=log31_err/cs, linestyle='-', marker='.', label='isoscalar PDF31 LO')
-    axis[1].set_xscale('log')
-    axis[1].set_xlim(1e3, 1e10)
-    #axis[1].set_yscale('log')
-    axis[1].set_xlabel(r'$E_{\nu}$ [GeV]')
-    #axis[1].set_xlabel(r'$E_{\nu}$')
-    axis[1].set_ylabel(r'$\sigma_{\nu} /\ \sigma_{\nu}^{ref}$')
-    axis[0].legend()
-    plt.savefig(f"Figs/proton31.pdf", format="pdf", bbox_inches="tight")
+if True:
+    #fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
+    fig = plt.figure(figsize=(6, 3))
+    plt.errorbar(E, pdf31_LO_x9/cs, yerr=pdf31_LO_x9_err/cs, linestyle='-', marker='.', label='PDF3.1 LO')
+    plt.errorbar(E, pdf40_x7/cs, yerr=pdf40_x7_err/cs, linestyle='-', marker='.', label='PDF4.0 LO')
+    plt.errorbar(E, pdf31_strange40/cs, yerr=pdf31_strange40_err/cs, linestyle='-', marker='.', label='PDF3.1 with PDF4.0 for strange quark')
+    plt.xscale('log')
+    plt.xlabel(r'$E_{\nu}$ [GeV]')
+    plt.ylabel(r'$\sigma_{\nu} /\ \sigma_{\nu}^{ref}$')
+    plt.legend()
+    plt.savefig(path.fig_path() + "pdf31_s4.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
 
 if False:
     fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
-    axis[0].errorbar(E, anti_proton_pdf31, linestyle='-', marker='.', label='anti-proton PDF31 LO')
-    axis[0].errorbar(E, anti_neutron_pdf31, linestyle='-', marker='.', label='anti-neutron PDF31 LO')
+    axis[0].errorbar(E, anti_proton_pdf31, linestyle='-', marker='.', label='proton PDF31 LO')
+    axis[0].errorbar(E, anti_neutron_pdf31, linestyle='-', marker='.', label='neutron PDF31 LO')
     axis[0].errorbar(E, anti_pdf31, linestyle='-', marker='.', label='isoscalar PDF31 LO')
     axis[0].errorbar(E, anti_cs, linestyle='-', marker='.', label='ref anti-neutrino')
     axis[0].set_xscale('log')
     axis[0].set_yscale('log')
-    axis[1].set_ylabel(r'$\sigma_{\bar{\nu}}$ [Pb]')
+    axis[0].set_ylabel(r'$\sigma_{\bar{\nu}}$ [Pb]')
     axis[1].errorbar(E, anti_proton_pdf31/anti_cs, linestyle='-', marker='.', label='anti-proton PDF31 LO')
     axis[1].errorbar(E, anti_neutron_pdf31/anti_cs, linestyle='-', marker='.', label='anti-neutron PDF31 LO')
     axis[1].errorbar(E, anti_pdf31/anti_cs, linestyle='-', marker='.', label='isoscalar PDF31 LO')
@@ -138,10 +146,10 @@ if False:
     axis[1].set_xlabel(r'$E_{\bar{\nu}}$ [GeV]')
     axis[1].set_ylabel(r'$\sigma_{\bar{\nu}} /\ \sigma_{\bar{\nu}}^{ref}$')
     axis[0].legend()
-    plt.savefig(f"Figs/anti_proton.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(path.fig_path() + "anti_proton31.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
-if True:
+if False:
     x31 = log31
     x31_err = log31_err
     label1 = 'PDF3.1 LO'
@@ -158,7 +166,33 @@ if True:
     exp_err = pdf31n_NLO_x9_err
     label3 = 'PDF3.1 NLO'
 
-    fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
+    x21_r = log21
+    x21_r_err = log21_err
+    label5 = 'PDF2.1 LO'
+if False:
+    x31 = pdf31_LO_anti
+    x31_err = pdf31_LO_anti_err
+    label1 = 'PDF3.1 LO anti-neutrino'
+
+    x40 = pdf31_LO_x9
+    x40_err = pdf31_LO_x9_err
+    label4 = 'PDF3.1 LO neutrino'
+
+    x21 = pdf31n_NLO_x9
+    x21_err = pdf31n_NLO_x9_err
+    label2 = 'PDF3.1 NLO neutrino'
+    
+    exp = pdf31_NLO_anti
+    exp_err = pdf31_NLO_anti_err
+    label3 = 'PDF3.1 NLO anti-neutrino'
+
+    x21_r = pdf21_LO_anti
+    x21_r_err = pdf21_LO_anti_err
+    label5 = 'PDF2.1 LO anti-neutrino'
+
+    #cs = cs_anti
+
+    fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[1, 1])
     #plt.plot(E_nu, ref_cs, label='ref')
     #plt.plot(E_nu2, ref_w, label='w')
     #plt.plot(E, pdf21, label='pdf21')
@@ -168,12 +202,13 @@ if True:
     axis[0].errorbar(E, x21, yerr=x21_err, linestyle='-', marker='.', label=label2)
     axis[0].errorbar(E, exp, yerr=exp_err, linestyle='-', marker='.', label=label3)
     axis[0].errorbar(E, x40, yerr=x40_err, linestyle='-', marker='.', label=label4)
-    axis[0].errorbar(E, cs, linestyle='-', marker='.', label='reference')
+    #axis[0].errorbar(E[:-6], x21_r[:-6], yerr=x21_r_err[:-6], linestyle='-', marker='.', label=label5)
+    #axis[0].errorbar(E, cs, linestyle='-', marker='.', label='reference')
     #pltot(E, pdf40, label='pdf40')
     #pltot(E, struc, label='struc')
     #pltot(E, cor, label='correction')
-    axis[1].set_xlabel(r'$E_{\nu}$ [GeV]')
-    axis[0].set_ylabel(r'$\sigma_{\nu}$ [Pb]')
+    axis[1].set_xlabel(r'$E_{\bar{\nu}}$ [GeV]')
+    axis[0].set_ylabel(r'$\sigma_{\bar{\nu}}$ [Pb]')
     axis[0].set_xscale('log')
     axis[0].set_yscale('log')
     #pltim(5e3, 5e9)
@@ -186,21 +221,21 @@ if True:
     #plt.plot(s, pdf31/cs, label='frac31')
     #plt.plot(s, struc/cs, label='frac_struc')
     #fig, axis = plt.subplots()
-    ratio = x21/cs
-    err_r = x21_err/cs
+    ratio = x21_r/cs
+    err_r = x21_r_err/cs
     #axis[1].errorbar(E, logstruc/cs, linestyle='-', marker='.', label='PDF3.1 NLO')
-    #axis[1].errorbar(E[:-6], ratio[:-6], yerr=err_r[:-6], linestyle='-', marker='.', label='PDF2.1 LO')
-    axis[1].errorbar(E, x31/cs, yerr=x31_err/cs, linestyle='-', marker='.', label=label1)
+    axis[1].errorbar(E, x31/cs_anti, yerr=x31_err/cs, linestyle='-', marker='.', label=label1)
     axis[1].errorbar(E, x21/cs, yerr=x21_err/cs, linestyle='-', marker='.', label=label2)
-    axis[1].errorbar(E, exp/cs, yerr=exp_err/cs, linestyle='-', marker='.', label=label3)
+    axis[1].errorbar(E, exp/cs_anti, yerr=exp_err/cs, linestyle='-', marker='.', label=label3)
     axis[1].errorbar(E, x40/cs, yerr=x40_err/cs, linestyle='-', marker='.', label=label4)
+    #axis[1].errorbar(E[:-6], ratio[:-6], yerr=err_r[:-6], linestyle='-', marker='.', label=label5)
     axis[1].set_xscale('log')
     #axis[1].legend()
     #axis[1].set_xlabel('Neutrino Energy [GeV]')
     axis[1].set_xlim(1e3, 1e10)
-    axis[1].set_ylabel(r'$\sigma_{\nu} /\ \sigma_{\nu}^{ref}$')
+    axis[1].set_ylabel(r'$\sigma_{\bar{\nu}} /\ \sigma_{\bar{\nu}}^{ref}$')
 
-    plt.savefig(path.fig_path() + "pdf40n_NLO_x9.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(path.fig_path() + "pdfs_anti2.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
 if False:

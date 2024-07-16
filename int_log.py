@@ -215,7 +215,10 @@ class cs_neutrino_nucleon:
             #xF1, F2, xF3 = self.strucf.struc_NLO_m(x, Q2) #self.struc_LO(x, Q2)
             xF1, F2, xF3 = self.strucf.strucf(x, Q2) #self.struc_LO(x, Q2)
             #print(f'diff xF1 NLO: {xF1}, xF1 lo: {xF1_lo}, diff: {np.abs(xF1 - xF1_lo)}')
-            return fact * (F2*(1-y) + xF1*y*y + xF3*y*(1 - y/2))
+            if self.anti:
+                return fact * (F2*(1-y) + xF1*y*y - xF3*y*(1 - y/2))
+            else:
+                return fact * (F2*(1-y) + xF1*y*y + xF3*y*(1 - y/2))
             # NLO from paper
             #return fact * (Yp * self.pdf.xfxQ2(2001, x, Q2) - y*y * self.pdf.xfxQ2(2002, x, Q2) + Ym * self.pdf.xfxQ2(2003, x, Q2))
 
@@ -231,21 +234,21 @@ pdf_31 = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 nlo_pdf_31 = lhapdf.mkPDF("NNPDF31_nlo_as_0118_mc")
 nlo_pdf_40 = lhapdf.mkPDF("NNPDF40_nlo_as_01180_nf_6")
 pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
-#pdf_21 = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
+pdf_21 = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
 nlo_pdf_23 = lhapdf.mkPDF("NNPDF23_nlo_as_0118")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf23n_NLO_acc_0.01_x9'
+name = 'pdf31_LO_acc_0.01_x9_anti'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
-for name, pdf in [(name, nlo_pdf_23)]: #, ('pdf31n_NLO_acc_0.01_x9_v5', nlo_pdf_31)]:#,  ('log21', pdf_21)]:
+for name, pdf in [(name, pdf_31), ('pdf40_LO_acc_0.01_x9_anti', pdf_40), ('pdf21_LO_acc_0.01_x9_anti', pdf_21)]: #, ('pdf31n_NLO_acc_0.01_x9_v5', nlo_pdf_31)]:#,  ('log21', pdf_21)]:
     print(f'PDF values: {pdf.q2Min=}')
     for i in range(0, 19): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
-        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True, multithread=True, precision=0.01)
+        cs = cs_neutrino_nucleon(E_nu, pdf, anti=True, target='isoscalar', NLO=False, multithread=True, precision=0.01)
         print('physical', cs.physical)
         print(f'Calculating for E_nu: {E_nu}')
         if cs.physical:
