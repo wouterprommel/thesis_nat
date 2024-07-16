@@ -69,13 +69,33 @@ def plot_quarks(pdfs, name, Q2):
     plt.savefig(path.fig_path() + "quarks_Q2.1e8.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
-def plot_up(pdfs, name, Q2):
-    for name, pdf in zip(name, pdfs):
-        x = np.linspace(pdf.xMin, 1, 100)
-        plt.plot(x, [pdf.xfxQ2(2, i, Q2) for i in x], label=name)
+def plot_up(pdf):
+    fig, axis = plt.subplots(1, 2, figsize=(9, 4.5))
+    x = np.linspace(1e-7, 1, 1000, endpoint=False)
+    axis[0].plot(x, [pdf.xfxQ2(2, i, 1e8) for i in x], label=r"up, $Q^2=1e8$")
+    axis[0].plot(x, [pdf.xfxQ2(-2, i, 1e8) for i in x], label=r"anti-up, $Q^2=1e8$")
+    axis[0].plot(x, [pdf.xfxQ2(1, i, 1e8) for i in x], label=r"down, $Q^2=1e8$")
+    axis[0].plot(x, [pdf.xfxQ2(-1, i, 1e8) for i in x], label=r"anti-down, $Q^2=1e8$")
     #plt.plot(x, [pdf31sx.xfxQ2(2001, i, Q2) for i in x], label='F2')
-    plt.legend()
-    plt.ylim((-2, 2))
+    axis[0].legend()
+    axis[0].set_ylim((0, 1))
+    axis[0].set_xlim((1e-3, 1))
+    axis[0].set_ylabel(r'$x q(x, Q^2)$')
+    axis[0].set_xlabel(r'$x$')
+    axis[0].set_xscale('log')
+
+    axis[1].plot(x, [pdf.xfxQ2(2, i, 1e2) for i in x], label=r"up, $Q^2=1e2$")
+    axis[1].plot(x, [pdf.xfxQ2(-2, i, 1e2) for i in x], label=r"anti-up, $Q^2=1e2$")
+    axis[1].plot(x, [pdf.xfxQ2(1, i, 1e2) for i in x], label=r"down, $Q^2=1e2$")
+    axis[1].plot(x, [pdf.xfxQ2(-1, i, 1e2) for i in x], label=r"anti-down, $Q^2=1e2$")
+    #plt.1lot(x, [pdf31sx.xfxQ2(2001, i, Q2) for i in x], label='F2')
+    axis[1].legend()
+    axis[1].set_ylim((0, 1))
+    axis[1].set_xlim((1e-3, 1))
+    axis[1].set_ylabel(r'$x q(x, Q^2)$')
+    axis[1].set_xlabel(r'$x$')
+    axis[1].set_xscale('log')
+    plt.savefig(path.fig_path() + "quarks_up_down.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
 def plot_down(pdfs, name, Q2):
@@ -277,7 +297,7 @@ def alphas(pdfs):
 #diff_34()
 
 #quark_results = diff_234()
-diff_234()
+#diff_234()
 #diff_struc()
 if False:
     ratio_up = np.array(quark_results['up']['MSE23']) / np.array(quark_results['anti-up']['MSE23'])
@@ -294,6 +314,7 @@ if False:
 Q2 = 1e8 #1.6e4 # so hugh dips at x>>0 stops at (higher)>1.5e4 Q2 energies !
 #plot_quarks([pdf21, pdf31, pdf40], ['PDF2.1', 'PDF3.1', 'PDF4.0'], Q2)
 
+plot_up(pdf31)
 
 #alphas([pdf21, pdf31, pdf40])
 
