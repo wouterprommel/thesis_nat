@@ -10,14 +10,20 @@ import multiprocessing
 import functools
 from datetime import datetime
 
-plt.rcParams['text.usetex'] = True
-plt.style.use('seaborn-v0_8-colorblind')
 
-pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
+class Structure_Functions():
 
-Flavours = [1, 2, 3, 4, -1, -2, -3, -4]
+    def __init__(self, set_pdf, precision) -> None:
+        global pdf 
+        global PRECISION 
+        pdf = set_pdf
+        PRECISION = precision
 
-PRECISION = 1
+
+    def strucf(self, x, Q2):
+        #pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
+        #pdf = self.pdf
+        return struc_NLO_m(x, Q2)
 
 def test(solver, xmin, flavour):
     X = np.logspace(xmin, 1, 1000, endpoint=False)
@@ -291,6 +297,13 @@ def C_parts():
 
 
 if __name__ == '__main__':
+    plt.rcParams['text.usetex'] = True
+    plt.style.use('seaborn-v0_8-colorblind')
+
+    pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
+
+    Flavours = [1, 2, 3, 4, -1, -2, -3, -4]
+
     #C_parts()
     Fs()
     #test(C, 1, 1)

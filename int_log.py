@@ -1,4 +1,4 @@
-import NLO_functions2 as NLO_functions
+from NLO_functions2 import Structure_Functions
 import lhapdf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,6 +35,7 @@ class cs_neutrino_nucleon:
         self.target = target 
         self.anti = anti
         self.NLO = NLO
+        self.strucf = Structure_Functions(pdf, precision)
 
         self.calc_count = 0
         if self.s < self.pdf.q2Max:
@@ -211,7 +212,8 @@ class cs_neutrino_nucleon:
             fact = self.convert * self.GF2 / np.pi * np.power(self.Mw2 / (self.Mw2 + Q2 ), 2) # the paper has extra factor 2
             #xF1, F2, xF3 = self.struc_NLO(x, Q2)
 
-            xF1, F2, xF3 = NLO_functions.struc_NLO_m(x, Q2) #self.struc_LO(x, Q2)
+            #xF1, F2, xF3 = self.strucf.struc_NLO_m(x, Q2) #self.struc_LO(x, Q2)
+            xF1, F2, xF3 = self.strucf.strucf(x, Q2) #self.struc_LO(x, Q2)
             #print(f'diff xF1 NLO: {xF1}, xF1 lo: {xF1_lo}, diff: {np.abs(xF1 - xF1_lo)}')
             return fact * (F2*(1-y) + xF1*y*y + xF3*y*(1 - y/2))
             # NLO from paper
@@ -230,19 +232,20 @@ nlo_pdf_31 = lhapdf.mkPDF("NNPDF31_nlo_as_0118_mc")
 nlo_pdf_40 = lhapdf.mkPDF("NNPDF40_nlo_as_01180_nf_6")
 pdf_40 = lhapdf.mkPDF("NNPDF40_lo_as_01180")
 #pdf_21 = lhapdf.mkPDF("NNPDF21_lo_as_0119_100")
+nlo_pdf_23 = lhapdf.mkPDF("NNPDF23_nlo_as_0118")
 #cs = cs_neutrino_nucleon(1e6, pdf)
 
 df = pd.read_csv('cs_3.csv')
-name = 'pdf31n_NLO_acc_1_x5_v4'
+name = 'pdf23n_NLO_acc_0.01_x9'
 df[name] = 19*[0.0]
 df[name + '_err'] = 19*[0.0]
 
-for name, pdf in [(name, nlo_pdf_31)]:#, ('log40', pdf_40), ('log21', pdf_21)]:
+for name, pdf in [(name, nlo_pdf_23)]: #, ('pdf31n_NLO_acc_0.01_x9_v5', nlo_pdf_31)]:#,  ('log21', pdf_21)]:
     print(f'PDF values: {pdf.q2Min=}')
     for i in range(0, 19): # 19 to end
         E_nu = df.at[i, 'E_nu']
         dt_start = datetime.datetime.now()
-        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True, multithread=True, precision=1)
+        cs = cs_neutrino_nucleon(E_nu, pdf, anti=False, target='isoscalar', NLO=True, multithread=True, precision=0.01)
         print('physical', cs.physical)
         print(f'Calculating for E_nu: {E_nu}')
         if cs.physical:
