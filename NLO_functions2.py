@@ -234,11 +234,11 @@ def struc_NLO_m(x, Q2):
     return res
 
 def Fs():
-    version = 1.5
+    version = 1
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        Q2 = 1e12
+        Q2 = 1e2
         #xmin = -4.8 #-4.8 is minimum for Q2=1e4, Q2=1e8, and probly for 1e12
         xmin = -9
         #xmin = -4.8
@@ -303,7 +303,7 @@ if __name__ == '__main__':
     pdf = lhapdf.mkPDF("NNPDF31_lo_as_0118")
 
     Flavours = [1, 2, 3, 4, -1, -2, -3, -4]
-
+    PRECISION =0.01
     #C_parts()
     Fs()
     #test(C, 1, 1)

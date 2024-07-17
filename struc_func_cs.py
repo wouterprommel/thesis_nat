@@ -23,16 +23,16 @@ class cs_neutrino_nucleon:
         assert self.s < self.pdf.q2Max, 'E_nu too high, s > q2max'
     
     def calc(self):
-        xmin = lambda q2: np.max([pdf.xMin, q2/self.s])
+        xmin = lambda q2: q2/self.s
         #print('xmin', xmin(1.2), xmin(2), xmin(1000))
-        qmax = np.min([self.s, (500*self.Mw)**2])
+        qmax = self.s
         sigma, err = integrate.dblquad(self._ddiff_neutrino_nucleon, pdf.q2Min, qmax, xmin, pdf.xMax)
         return sigma, err
     
     def _ddiff_neutrino_nucleon(self, x, q2):
         self.calc_count += 1
         assert 0 < q2/(self.s * x) < 1, 'y must be between 0 and 1'
-        A = (self.GF*self.GF)/(4*np.pi) * ((self.Mw*self.Mw)/(self.Mw*self.Mw + q2))**2
+        A = (self.GF*self.GF)/(4*np.pi) * ((self.Mw*self.Mw)/(self.Mw*self.Mw + q2))**2 / 2
         y = q2/x/self.s
         Yp = 1 + (1 - y)**2
         Ym = 1 - (1 - y)**2
@@ -40,7 +40,7 @@ class cs_neutrino_nucleon:
         FL = self.pdf.xfxQ2(2002, x, q2)
         xF3 = self.pdf.xfxQ2(2003, x, q2)
         #return A*(Yp*F2 - y*y*FL + Ym*xF3)
-        return A*(Yp*F2 + Ym*xF3)
+        return A*(Yp*F2 + Ym*xF3) / x
     
 
 
