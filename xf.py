@@ -41,8 +41,10 @@ def plot_quarks(pdfs, name, Q2):
         axis[0, 1].plot(x, [pdf.xfxQ2(1, i, Q2) for i in x], label='down ' + name)
         axis[1, 1].plot(x, [pdf.xfxQ2(-1, i, Q2) for i in x], label='anti-down ' + name)
         axis[0, 2].plot(x, [pdf.xfxQ2(3, i, Q2) for i in x], label='strange ' + name)
-        axis[1, 2].plot(x, [pdf.xfxQ2(-4, i, Q2) for i in x], label='anti-charm ' + name)
-        axis[0, 3].plot(x, [pdf.xfxQ2(21, i, Q2)/10 for i in x], label='gluon/10 ' + name)
+        axis[1, 2].plot(x, [pdf.xfxQ2(-3, i, Q2) for i in x], label='anti-strange ' + name)
+        #axis[0, 3].plot(x, [pdf.xfxQ2(21, i, Q2)/10 for i in x], label='gluon/10 ' + name)
+        axis[0, 3].plot(x, [pdf.xfxQ2(4, i, Q2) for i in x], label='charm' + name)
+        axis[1, 3].plot(x, [pdf.xfxQ2(-4, i, Q2) for i in x], label='anti-charm' + name)
     #plt.plot(x, [pdf31sx.xfxQ2(2001, i, Q2) for i in x], label='F2')
     for ax in [axis[0, 0],
                axis[1, 0],
@@ -50,7 +52,8 @@ def plot_quarks(pdfs, name, Q2):
                axis[0, 1],
                axis[1, 2],
                axis[0, 2],
-               axis[0, 3]]:
+               axis[0, 3],
+               axis[1, 3]]:
         ax.legend()
         ax.set_ylim((0, 1))
         ax.set_xscale('log')
@@ -82,8 +85,8 @@ def plot_quarks(pdfs, name, Q2):
     axis[0, 2].set_xscale('log')
     axis[0, 3].set_xscale('log')
     '''
-    axis[1, 3].set_visible(False)
-    plt.savefig(path.fig_path() + f"quarks_Q2.1e{np.log10(Q2)}.pdf", format="pdf", bbox_inches="tight")
+    #axis[1, 3].set_visible(False)
+    plt.savefig(path.fig_path() + f"quarks_Q2.1e{np.log10(Q2)}.v2.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
 def plot_up(pdf):
@@ -328,10 +331,10 @@ if False:
     plt.legend()
     plt.show()
 
-Q2 = 1e12 #1.6e4 # so hugh dips at x>>0 stops at (higher)>1.5e4 Q2 energies !
+Q2 = 1e8 #1.6e4 # so hugh dips at x>>0 stops at (higher)>1.5e4 Q2 energies !
 plot_quarks([pdf21, pdf31, pdf40], ['PDF2.1', 'PDF3.1', 'PDF4.0'], Q2)
 
-plot_up(pdf31)
+#plot_up(pdf31)
 
 #alphas([pdf21, pdf31, pdf40])
 #plot(pdf31)

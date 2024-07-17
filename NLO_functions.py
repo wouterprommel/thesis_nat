@@ -108,7 +108,7 @@ def Ca(x, Q2, flavour):
     f = lambda z: 1/(z) * (1 + x*x/z/z) * np.log(1 - x/z) * q_s(z, Q2, flavour) # 1/(1 - x/z) --> 1/z when using MC_div
     #r = MC_div(f, x, 1) # div does the f(x) - f(b)/ (1-x) part.
     f2 = lambda z: (f(z) - f(1)) / (1 - z)
-    r, err = integrate.quad(f2, x, 1, epsabs=PRECISION)
+    r, err = integrate.quad(f2, 1, x, epsabs=PRECISION)
     return r
 
 def Ce(x, Q2, flavour):

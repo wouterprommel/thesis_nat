@@ -115,7 +115,7 @@ mean = (proton_pdf31 + neutron_pdf31) / 2
 print(neutron_pdf31.shape)
 print(mean.shape)
 
-if True:
+if False:
     #fig, axis = plt.subplots(2, sharex='col', figsize=(6,6), height_ratios=[2, 1])
     fig = plt.figure(figsize=(6, 3))
     plt.errorbar(E, pdf31_LO_x9/cs, yerr=pdf31_LO_x9_err/cs, linestyle='-', marker='.', label='PDF3.1 LO')
@@ -169,6 +169,56 @@ if False:
     x21_r = log21
     x21_r_err = log21_err
     label5 = 'PDF2.1 LO'
+
+if True:
+    x21 = (log21, log21_err)
+    x31 = (pdf31_LO_x9, pdf31_LO_x9_err)
+    x40 = (log40, log40_err)
+    n31 = (pdf31n_NLO_x9, pdf31n_NLO_x9_err)
+    n40 = (pdf40n_NLO_x9, pdf40n_NLO_x9_err)
+    fig, axis = plt.subplots(2, 2, sharex='col', figsize=(12, 6), height_ratios=[1, 1])
+    axis[0, 0].errorbar(E, x31[0], yerr=x31[1], linestyle='-', marker='.', label='PDF3.1 LO')
+    axis[0, 0].errorbar(E, x40[0], yerr=x40[1], linestyle='-', marker='.', label='PDF4.0 LO')
+    axis[0, 0].errorbar(E, cs, linestyle='-', marker='.', label='reference')
+    axis[0, 0].errorbar(E[:-6], x21[0][:-6], yerr=x21[1][:-6], linestyle='-', marker='.', label='PDF2.1 LO')
+    axis[0, 0].set_ylabel(r'$\sigma_{\nu}$ [Pb]')
+    axis[0, 0].set_ylim(10, 5e4)
+    axis[0, 0].set_xscale('log')
+    axis[0, 0].set_yscale('log')
+    axis[0 ,0].legend()
+
+    axis[1, 0].errorbar(E, n31[0]/cs, yerr=n31[1]/cs, linestyle='-', marker='.', label='PDF3.1 NLO/ref ratio')
+    axis[1, 0].errorbar(E, n40[0]/cs, yerr=n40[1]/cs, linestyle='-', marker='.', label='PDF4.0 NLO/ref ratio')
+    axis[1, 0].errorbar(E, x31[0]/cs, yerr=x31[1]/cs, linestyle='-', marker='.', label='PDF3.1 LO/ref ratio')
+    axis[1, 0].errorbar(E, x40[0]/cs, yerr=x40[1]/cs, linestyle='-', marker='.', label='PDF4.0 LO/ref ratio')
+    axis[1, 0].errorbar(E[:-6], x21[0][:-6]/cs[:-6], yerr=x21[1][:-6]/cs[:-6], linestyle='-', marker='.', label='PDF2.1 LO/ref ratio')
+    axis[1, 0].set_xlabel(r'$E_{\nu}$ [GeV]')
+    axis[1, 0].set_ylabel(r'$\sigma_{\nu} /\ \sigma_{\nu}^{ref}$')
+    axis[1, 0].set_xlim(1e3, 1e10)
+    axis[1, 0].legend()
+
+    axis[0, 1].errorbar(E, n31[0], yerr=n31[1], linestyle='-', marker='.', label='PDF3.1 NLO')
+    axis[0, 1].errorbar(E, n40[0], yerr=n40[1], linestyle='-', marker='.', label='PDF4.0 NLO')
+    axis[0, 1].errorbar(E, cs, linestyle='-', marker='.', label='reference')
+    axis[0, 1].set_ylabel(r'$\sigma_{\nu}$ [Pb]')
+    axis[0, 1].set_xscale('log')
+    axis[0, 1].set_yscale('log')
+    axis[0, 1].legend()
+
+    axis[1, 1].errorbar(E, n31[0]/x31[0], yerr=n31[1]/x40[0], linestyle='-', marker='.', label='PDF3.1 NLO/LO ratio')
+    axis[1, 1].errorbar(E, n40[0]/x40[0], yerr=n40[1]/x40[0], linestyle='-', marker='.', label='PDF4.0 NLO/LO ratio')
+    axis[1, 1].set_xlabel(r'$E_{\nu}$ [GeV]')
+    axis[1, 1].set_ylabel(r'$\sigma_{\nu}^{NLO} /\ \sigma_{\nu}^{L0}$')
+    axis[1, 1].set_xlim(1e3, 1e10)
+    axis[1, 1].legend()
+
+
+
+    fig.subplots_adjust(hspace=0.05)
+    fig.subplots_adjust(wspace=0.15)
+    plt.savefig(path.fig_path() + "pdfs4.pdf", format="pdf", bbox_inches="tight")
+    plt.show()
+
 if False:
     x31 = pdf31_LO_anti
     x31_err = pdf31_LO_anti_err

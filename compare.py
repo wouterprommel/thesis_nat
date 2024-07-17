@@ -16,7 +16,7 @@ plt.rcParams['text.usetex'] = True
 
 lo, nlo, X, Q2 = open_pickle('compare_lo_nlo')
 #print(lo)
-E = 150
+E = 200
 lo = np.array(lo[:E])
 nlo = np.array(nlo[:E])
 X = np.array(X[:E])
@@ -31,7 +31,7 @@ plt.scatter(X, nlo)
 plt.xscale('log')
 plt.ylabel(r'$\frac{d\sigma(x, Q^2)}{dxdQ^2}$') #evaluation of 
 plt.xlabel(r'$x$')
-plt.savefig(path.fig_path() + "pdf31_point_sample_comparison_x9.pdf", format="pdf", bbox_inches="tight")
+#plt.savefig(path.fig_path() + "pdf31_point_sample_comparison_x9.pdf", format="pdf", bbox_inches="tight")
 plt.show()
 
 #for i, j in zip(lo, nlo):
